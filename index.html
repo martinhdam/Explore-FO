@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Explore FO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: fjord hero + three views (Explore, Hosts, Host dashboard) under one nav; detail opens in a sheet */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --fg:#17201d; --muted:#5d6a65; --line:#dbe2de;
+  --sea:#123a3f; --on-sea:#eaf2ef; --on-sea-2:#c4dcd4; --moss:#2f6b4a; --moss-soft:#e1ede5;
+  --turf:#c98a34; --turf-soft:#f6ead8; --danger:#b4412f; --on-accent:#ffffff;
+  --shadow:0 1px 2px rgba(18,40,36,.06),0 8px 24px -12px rgba(18,40,36,.18);
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"Figtree","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1514; --surface:#18201e; --fg:#e6ede9; --muted:#9caba5; --line:#29332f;
+  --sea:#0b2427; --on-sea:#e6f0ec; --on-sea-2:#a9c7bd; --moss:#7cc095; --moss-soft:#1d3327;
+  --turf:#e3a756; --turf-soft:#352919; --danger:#ec8a78; --on-accent:#0f1514;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1514; --surface:#18201e; --fg:#e6ede9; --muted:#9caba5; --line:#29332f;
+  --sea:#0b2427; --on-sea:#e6f0ec; --on-sea-2:#a9c7bd; --moss:#7cc095; --moss-soft:#1d3327;
+  --turf:#e3a756; --turf-soft:#352919; --danger:#ec8a78; --on-accent:#0f1514;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.08;letter-spacing:-.015em}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--turf);outline-offset:2px}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+
+/* nav */
+.top{background:var(--sea);color:var(--on-sea);position:sticky;top:env(safe-area-inset-top,0px);z-index:15;border-bottom:1px solid rgba(255,255,255,.08)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:16;background:var(--sea)}
+.top .wrap{display:flex;align-items:center;gap:14px;padding-block:12px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.02em;display:flex;align-items:center;gap:8px;margin-right:auto;background:none;border:0;cursor:pointer;color:var(--on-sea);padding:0}
+.logo svg{width:26px;height:26px}
+.tabs{display:flex;gap:4px;background:rgba(255,255,255,.08);padding:4px;border-radius:999px}
+.tabs a{color:var(--on-sea-2);text-decoration:none;font-weight:600;font-size:.9rem;padding:7px 14px;border-radius:999px;white-space:nowrap}
+.tabs a[aria-current="page"]{background:var(--on-sea);color:var(--sea)}
+
+/* hero */
+.hero{position:relative;background:var(--sea);color:var(--on-sea);overflow:hidden;isolation:isolate}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.hero-copy{padding-block:clamp(44px,8vw,88px) clamp(110px,15vw,170px);display:grid;gap:18px;max-width:760px}
+.hero .eyebrow{color:var(--on-sea-2)}
+.hero h1{font-size:clamp(2.5rem,7vw,5rem);font-weight:800}
+.hero h1 em{font-style:normal;color:var(--turf)}
+.hero p{margin:0;font-size:clamp(1rem,2.2vw,1.15rem);max-width:54ch;color:var(--on-sea-2)}
+.searchbox{display:flex;align-items:center;gap:6px;background:var(--surface);color:var(--fg);border-radius:14px;padding:6px 6px 6px 16px;max-width:620px;box-shadow:0 18px 40px -18px rgba(0,0,0,.6)}
+.searchbox svg{width:20px;height:20px;flex:none;color:var(--muted)}
+.searchbox input{flex:1;min-width:0;border:0;background:none;padding:10px 4px;font-size:1rem;outline:none}
+.hero-stats{display:flex;gap:28px;flex-wrap:wrap;font-family:var(--mono);font-size:.8rem;color:var(--on-sea-2)}
+.hero-stats b{display:block;font-family:var(--display);font-size:1.6rem;color:var(--on-sea);font-weight:700}
+
+.tiles{position:relative;margin-top:-72px;z-index:2}
+.tiles .wrap{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.tiles .wrap{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:left;cursor:pointer;display:grid;gap:10px;box-shadow:var(--shadow);transition:transform .18s}
+.tile:hover{transform:translateY(-3px)}
+.tile[aria-pressed="true"]{border-color:var(--moss);box-shadow:0 0 0 2px var(--moss),var(--shadow)}
+.ic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center}
+.ic svg{width:22px;height:22px}
+.tile b{font-family:var(--display);font-size:1.05rem;font-weight:700}
+.tile span{font-size:.82rem;color:var(--muted)}
+
+section{padding-block:44px 0}
+.sec-head{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.sec-head h2{font-size:clamp(1.6rem,3.6vw,2.3rem);font-weight:700}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;background:var(--fg);color:var(--bg);padding:11px 18px;border-radius:10px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn.moss{background:var(--moss);color:var(--on-accent)}
+.btn.turf{background:var(--turf);color:#1b1610}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn.small{padding:7px 12px;font-size:.86rem;border-radius:8px}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--line)}
+.btn.danger.armed{background:var(--danger);color:var(--surface);border-color:var(--danger)}
+.btn:disabled{opacity:.55;cursor:default}
+
+/* featured */
+.feature{display:grid;grid-template-columns:1.25fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+@media (max-width:760px){.feature{grid-template-columns:1fr}}
+.feature .art{min-height:250px;position:relative}
+.art svg{position:absolute;inset:0;width:100%;height:100%}
+.feature .txt{padding:clamp(20px,4vw,34px);display:grid;gap:14px;align-content:center}
+.feature h3{font-size:clamp(1.5rem,3.2vw,2.1rem);font-weight:700}
+.feature p{margin:0;color:var(--muted)}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{font-family:var(--mono);font-size:.75rem;padding:4px 10px;border-radius:999px;background:var(--moss-soft);color:var(--fg)}
+.pill.ex{background:var(--turf-soft)}
+
+/* rail + grid */
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--navh,62px));z-index:6;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-top:44px}
+.rail .wrap{padding-block:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rail h2{font-size:1.25rem;font-weight:700;margin-right:auto}
+.rail h2 small{font-family:var(--mono);font-size:.78rem;font-weight:400;color:var(--muted);margin-left:6px}
+select{padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:.9rem;cursor:pointer}
+.toggle{border:1px solid var(--line);background:var(--surface);padding:9px 12px;border-radius:10px;font-size:.9rem;cursor:pointer}
+.toggle[aria-pressed="true"]{background:var(--turf-soft);border-color:var(--turf)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:22px;padding-block:24px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow);transition:transform .18s;position:relative;min-width:0}
+.card:hover{transform:translateY(-3px)}
+.card .art{aspect-ratio:16/9;position:relative;max-width:100%}
+.badge{position:absolute;left:12px;top:12px;display:flex;gap:6px;align-items:center;background:var(--surface);padding:5px 10px 5px 7px;border-radius:999px;font-size:.78rem;font-weight:600}
+.badge svg{width:15px;height:15px}
+.save{position:absolute;right:10px;top:10px;width:36px;height:36px;border-radius:50%;border:0;background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--fg)}
+.save svg{width:18px;height:18px}
+.save[aria-pressed="true"] svg{fill:#d0473a;stroke:#d0473a}
+.card-main{all:unset;cursor:pointer;display:flex;flex-direction:column;flex:1}
+.card-main:focus-visible{outline:2px solid var(--turf);outline-offset:-2px}
+.card-body{padding:16px 18px 14px;display:grid;gap:7px;flex:1;align-content:start}
+.where{font-family:var(--mono);font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.card h3{font-size:1.2rem;font-weight:700}
+.card p{margin:0;font-size:.93rem;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.byline{display:flex;align-items:center;gap:8px;font-size:.84rem;margin-top:4px}
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:.8rem;color:#fff;flex:none}
+.av.lg{width:56px;height:56px;font-size:1.3rem}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:auto 18px 0;padding:12px 0 16px;border-top:1px solid var(--line);font-size:.85rem;font-variant-numeric:tabular-nums}
+.price{font-family:var(--display);font-weight:700;font-size:1.1rem}
+.price small{font-family:var(--body);font-weight:400;font-size:.75rem;color:var(--muted)}
+.empty{grid-column:1/-1;padding:44px 24px;text-align:center;border:1px dashed var(--line);border-radius:16px;color:var(--muted);display:grid;gap:12px;justify-items:center}
+.empty b{font-family:var(--display);font-size:1.2rem;color:var(--fg)}
+
+.islands{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.isl{text-align:left;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.isl:hover{border-color:var(--moss)}
+.isl b{font-family:var(--display);font-weight:700}
+.isl small{display:block;font-size:.78rem;color:var(--muted)}
+.n{font-family:var(--mono);font-size:.8rem;background:var(--moss-soft);border-radius:6px;padding:2px 8px}
+.tips{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:26px}
+.tip{display:grid;gap:8px;padding-top:16px;border-top:2px solid var(--fg)}
+.tip h3{font-size:1.15rem;font-weight:700}
+.tip p{margin:0;color:var(--muted);font-size:.94rem}
+
+/* host cta band */
+.band{background:var(--sea);color:var(--on-sea);border-radius:20px;padding:clamp(22px,4vw,40px);display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center}
+@media (max-width:760px){.band{grid-template-columns:1fr}}
+.band h2{font-size:clamp(1.6rem,3.6vw,2.3rem);font-weight:700}
+.band p{color:var(--on-sea-2);margin:10px 0 0}
+.roles{display:flex;flex-wrap:wrap;gap:8px}
+.roles span{border:1px solid rgba(255,255,255,.25);padding:6px 12px;border-radius:999px;font-size:.88rem;color:var(--on-sea)}
+
+/* hosts directory */
+.page-head{padding-block:40px 8px;display:grid;gap:10px}
+.page-head h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:800}
+.page-head p{margin:0;max-width:60ch;color:var(--muted)}
+.hosts{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;padding-block:20px 0}
+.host{all:unset;cursor:pointer;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:12px;box-shadow:var(--shadow);align-content:start;min-width:0}
+.host:hover{border-color:var(--moss)}
+.host:focus-visible{outline:2px solid var(--turf)}
+.host-top{display:flex;gap:12px;align-items:center}
+.host h3{font-size:1.2rem;font-weight:700}
+.host p{margin:0;color:var(--muted);font-size:.92rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.role{font-size:.8rem;font-weight:600}
+.chipbar{display:flex;gap:6px;flex-wrap:wrap}
+.chipbar button{border:1px solid var(--line);background:var(--surface);padding:7px 13px;border-radius:999px;cursor:pointer;font-size:.88rem;font-weight:600}
+.chipbar button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+
+/* dashboard */
+.dash{display:grid;grid-template-columns:320px 1fr;gap:24px;padding-block:24px 0;align-items:start}
+@media (max-width:860px){.dash{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px;display:grid;gap:14px;min-width:0}
+.panel h2{font-size:1.35rem;font-weight:700}
+.kv{display:grid;gap:8px;font-size:.92rem}
+.kv div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{text-align:right;overflow-wrap:anywhere}
+.alist{display:grid;gap:10px}
+.arow{display:grid;grid-template-columns:72px 1fr auto;gap:14px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:10px;min-width:0}
+.arow .art{width:72px;height:54px;border-radius:8px;overflow:hidden;position:relative}
+.arow b{font-family:var(--display);font-size:1.02rem;display:block}
+.arow .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:520px){.arow{grid-template-columns:60px 1fr}.arow .acts{grid-column:1/-1;justify-content:flex-start}.arow .art{width:60px}}
+.fm{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.fm label{display:grid;gap:5px;font-size:.84rem;font-weight:600}
+.fm .full{grid-column:1/-1}
+.fm input,.fm select,.fm textarea{padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);font-weight:400;font-size:.95rem;width:100%}
+.fm .hint{font-weight:400;color:var(--muted);font-size:.78rem}
+@media (max-width:520px){.fm{grid-template-columns:1fr}}
+.rolepick{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.rolepick button{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px;cursor:pointer;text-align:left;font-weight:600;font-size:.88rem;display:flex;gap:8px;align-items:center}
+.rolepick button[aria-pressed="true"]{border-color:var(--moss);box-shadow:0 0 0 2px var(--moss)}
+.monthpick{display:grid;grid-template-columns:repeat(12,1fr);gap:4px}
+@media (max-width:520px){.monthpick{grid-template-columns:repeat(6,1fr)}}
+.monthpick button{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:7px 0;font-family:var(--mono);font-size:.72rem;cursor:pointer}
+.monthpick button[aria-pressed="true"]{background:var(--moss);border-color:var(--moss);color:var(--on-accent)}
+.formbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.msg{font-size:.9rem;font-weight:600}
+.msg.ok{color:var(--moss)} .msg.err{color:var(--danger)}
+.notice{background:var(--turf-soft);border-radius:12px;padding:14px 16px;font-size:.92rem}
+.steps{display:grid;gap:10px;counter-reset:s;margin:0;padding:0;list-style:none}
+.steps li{counter-increment:s;display:flex;gap:10px;font-size:.92rem}
+.steps li::before{content:counter(s);flex:none;width:24px;height:24px;border-radius:50%;background:var(--moss-soft);display:grid;place-items:center;font-family:var(--mono);font-size:.75rem}
+
+footer{margin-top:56px;border-top:1px solid var(--line);padding-block:28px;font-size:.88rem;color:var(--muted)}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(6,14,13,.6);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:min(760px,100%);max-height:90vh;overflow:auto;border-radius:20px 20px 0 0;display:grid;position:relative}
+@media (min-width:760px){.scrim{align-items:center}.sheet{border-radius:20px}}
+.sheet .art{height:190px;position:relative}
+.sheet .in{padding:22px max(22px,env(safe-area-inset-right,0px)) calc(26px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px));display:grid;gap:16px}
+.sheet h2{font-size:clamp(1.5rem,4vw,2rem);font-weight:700}
+.close{position:absolute;right:14px;top:14px;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:1.1rem;z-index:2}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.facts div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.facts b{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.facts span{font-family:var(--display);font-weight:700;font-size:1.05rem}
+.months{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+.months i{font-style:normal;font-family:var(--mono);font-size:.62rem;text-align:center;padding:5px 0;border-radius:4px;background:var(--bg);color:var(--muted)}
+.months i.on{background:var(--moss);color:var(--on-accent)}
+.sheet ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.hostbox{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:12px}
+.contact{display:grid;gap:8px}
+.contact div{display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--bg);border-radius:9px;padding:8px 10px;font-size:.92rem}
+.contact span{user-select:all;overflow-wrap:anywhere;font-family:var(--mono);font-size:.85rem}
+.mini{display:grid;gap:8px}
+.mini button{all:unset;cursor:pointer;display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px}
+.mini button:hover{border-color:var(--moss)}
+.mini .art{width:64px;height:44px;border-radius:7px;overflow:hidden;position:relative}
+.note{font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.card,.tile{transition:none}}
+</style>
+
+<style>
+.lang{background:rgba(255,255,255,.1);color:var(--on-sea);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:7px 10px;font-size:.85rem;font-weight:600}
+.lang option{color:#17201d;background:#fff}
+.date-in{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:.9rem}
+.next{font-family:var(--mono);font-size:.72rem;color:var(--moss);font-weight:500}
+.next.off{color:var(--muted)}
+/* calendar */
+.cal{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:12px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cal-head b{font-family:var(--display);font-size:1.1rem;text-transform:capitalize}
+.cal-nav{display:flex;gap:6px}
+.cal-nav button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.cal-nav button:disabled{opacity:.35;cursor:default}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal-grid .wd{font-family:var(--mono);font-size:.66rem;color:var(--muted);text-transform:uppercase;padding-bottom:2px}
+.day{aspect-ratio:1;border-radius:9px;border:1px solid transparent;background:none;cursor:default;font-size:.9rem;font-variant-numeric:tabular-nums;display:grid;place-items:center;position:relative;color:var(--muted);max-width:100%}
+.day.free{background:var(--moss-soft);color:var(--fg);font-weight:700;cursor:pointer}
+.day.free::after{content:"";position:absolute;bottom:5px;width:5px;height:5px;border-radius:50%;background:var(--moss)}
+.day.full{color:var(--muted);text-decoration:line-through;cursor:pointer;background:var(--bg)}
+.day.today{border-color:var(--turf)}
+.day.sel{background:var(--moss);color:var(--on-accent)}
+.day.sel::after{background:var(--on-accent)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.times{display:flex;flex-wrap:wrap;gap:8px}
+.times button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;display:grid;text-align:left;font-variant-numeric:tabular-nums}
+.times button b{font-family:var(--display);font-size:1rem}
+.times button small{font-size:.74rem;color:var(--muted)}
+.times button[aria-pressed="true"]{border-color:var(--moss);box-shadow:0 0 0 2px var(--moss)}
+.times button:disabled{opacity:.5;cursor:default}
+.reqbox{background:var(--moss-soft);border-radius:12px;padding:14px;display:grid;gap:10px}
+.reqbox textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:10px;background:var(--surface);font-size:.9rem;resize:vertical}
+/* slot editor */
+.slotbox{display:grid;gap:12px;border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg)}
+.slotadd{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;align-items:end}
+.slotadd label{font-size:.76rem}
+.slotlist{display:grid;gap:6px;max-height:280px;overflow:auto}
+.slotrow{display:grid;grid-template-columns:1fr 70px 90px auto;gap:8px;align-items:center;font-size:.88rem;background:var(--surface);border-radius:8px;padding:6px 8px;font-variant-numeric:tabular-nums}
+.slotrow input{padding:6px 8px!important}
+.slotrow button{border:0;background:none;color:var(--danger);cursor:pointer;font-size:1rem;padding:4px 8px}
+.seg{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:3px;width:max-content;max-width:100%}
+.seg button{border:0;background:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-size:.84rem;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+</style>
+<style>
+.art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.sheet .art.photo{height:clamp(220px,45vw,340px)}
+.gal{position:absolute;inset:0;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+.gal img{position:relative;flex:0 0 100%;scroll-snap-align:start}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{position:relative;width:96px;height:72px;border-radius:8px;overflow:hidden;background:var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .pill{position:absolute;left:4px;bottom:4px;font-size:.62rem;padding:1px 6px}
+.thumb button{position:absolute;right:3px;top:3px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer}
+.trips .panel{gap:12px}
+</style>
+<style>
+.day.pick{background:var(--bg);color:var(--fg);cursor:pointer;border:1px solid var(--line)}
+.day.pick:hover{border-color:var(--moss)}
+button.day.free.sel{cursor:pointer}
+</style>
+<style>
+.bookbar{position:sticky;bottom:0;z-index:3;background:var(--surface);border-top:1px solid var(--line);padding:12px max(18px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));display:grid;gap:8px;box-shadow:0 -10px 24px -16px rgba(0,0,0,.35)}
+.bb-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:12px;padding:3px}
+.stepper button{width:36px;height:36px;border-radius:9px;border:0;background:var(--bg);font-size:1.2rem;font-weight:700;cursor:pointer}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper span{display:grid;text-align:center;min-width:58px;line-height:1.1}
+.stepper b{font-family:var(--display);font-size:1.15rem}
+.stepper small{font-size:.68rem;color:var(--muted)}
+.bb-total{display:grid;line-height:1.15;margin-right:auto;font-variant-numeric:tabular-nums}
+.bb-total small{font-size:.75rem;color:var(--muted)}
+.bb-total b{font-family:var(--display);font-size:1.35rem}
+.bb-pay{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:.78rem;color:var(--muted)}
+.pm{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--fg)}
+.pm.sel{background:var(--moss-soft);border-color:var(--moss)}
+@media (max-width:420px){.bb-row .btn{flex:1 1 100%}}
+</style>
+</head>
+<body>
+<script>
+/* Demo storage: replaces the online database with this device's browser storage, so the file works on any host (e.g. GitHub Pages). */
+(function(){
+ const SEED={"ex-a-gardi": {"name": "The á Garði family", "role": "home", "island": "Streymoy", "village": "Kirkjubøur", "languages": "Faroese, English, Danish", "since": "2014", "bio": "We farm sheep on the same land our family has worked for generations, and open our kitchen to guests.", "phone": "+298 00 00 06", "email": "example@agardi.fo", "activities": [{"id": "a1", "t": "Heimablídni in Kirkjubøur", "cat": "food", "isl": "Streymoy", "place": "Kirkjubøur", "dur": "3 hrs", "price": 895, "mo": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "d": "Four courses at a family table: skerpikjøt, ræst fish, lamb from our own fields and rhubarb tart.", "inc": ["Four courses", "Family stories", "Transport on request"], "km": "", "lvl": "", "max": 14, "slots": [{"d": "2026-10-28", "h": "18:00", "n": 14}, {"d": "2026-10-29", "h": "18:00", "n": 11}, {"d": "2026-11-02", "h": "18:00", "n": 0}, {"d": "2026-11-04", "h": "18:00", "n": 11}, {"d": "2026-11-05", "h": "18:00", "n": 0}, {"d": "2026-11-09", "h": "18:00", "n": 14}, {"d": "2026-11-11", "h": "18:00", "n": 2}, {"d": "2026-11-12", "h": "18:00", "n": 2}, {"d": "2026-11-16", "h": "18:00", "n": 0}, {"d": "2026-11-18", "h": "18:00", "n": 11}, {"d": "2026-11-19", "h": "18:00", "n": 2}, {"d": "2026-11-23", "h": "18:00", "n": 2}, {"d": "2026-11-25", "h": "18:00", "n": 14}, {"d": "2026-11-26", "h": "18:00", "n": 14}, {"d": "2026-11-30", "h": "18:00", "n": 11}, {"d": "2026-12-02", "h": "18:00", "n": 11}, {"d": "2026-12-03", "h": "18:00", "n": 14}, {"d": "2026-12-07", "h": "18:00", "n": 14}, {"d": "2026-12-09", "h": "18:00", "n": 14}, {"d": "2026-12-10", "h": "18:00", "n": 2}, {"d": "2026-12-14", "h": "18:00", "n": 11}, {"d": "2026-12-16", "h": "18:00", "n": 0}, {"d": "2026-12-17", "h": "18:00", "n": 0}, {"d": "2026-12-21", "h": "18:00", "n": 2}, {"d": "2026-12-23", "h": "18:00", "n": 11}, {"d": "2026-12-24", "h": "18:00", "n": 14}, {"d": "2026-12-28", "h": "18:00", "n": 14}, {"d": "2026-12-30", "h": "18:00", "n": 14}, {"d": "2026-12-31", "h": "18:00", "n": 2}, {"d": "2027-01-04", "h": "18:00", "n": 14}]}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": ""}, "ex-fjallafolk": {"name": "Fjallafólk", "role": "guide", "island": "Eysturoy", "village": "Eiði", "languages": "Faroese, English, German", "since": "2019", "bio": "Certified mountain leader taking small groups up the highest peaks of Eysturoy.", "phone": "+298 00 00 03", "activities": [{"id": "a1", "t": "Slættaratindur at Sunset", "cat": "hike", "isl": "Eysturoy", "place": "Eiðisskarð", "dur": "2.5 hrs", "price": 450, "mo": [4, 5, 6, 7, 8], "d": "Climb the highest peak in the Faroes, 880 m. On a clear evening you can see all 18 islands at once.", "inc": ["Guide", "Headlamp", "Hot soup at the top"], "km": "4 km", "lvl": "Moderate", "max": 8, "slots": []}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": "", "email": ""}, "ex-gjogv": {"name": "Heima í Gjógv", "role": "home", "island": "Eysturoy", "village": "Gjógv", "languages": "Faroese, English", "since": "2017", "bio": "A retired fisherman and his wife who cook the day's catch the old way.", "phone": "+298 00 00 07", "activities": [{"id": "a1", "t": "Fish Supper in Gjógv", "cat": "food", "isl": "Eysturoy", "place": "Gjógv", "dur": "2.5 hrs", "price": 750, "mo": [3, 4, 5, 6, 7, 8, 9], "d": "The day's catch cooked the way grandmother made it, with potatoes, rhubarb jam and a view of the gorge.", "inc": ["Three courses", "Coffee and home baking"], "km": "", "lvl": "", "max": 10, "slots": [{"d": "2026-10-29", "h": "18:00", "n": 10}, {"d": "2026-10-31", "h": "18:00", "n": 7}]}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": "", "email": ""}, "ex-leynar": {"name": "Leynar Kayak", "role": "rental", "island": "Streymoy", "village": "Leynar", "languages": "Faroese, English", "since": "2018", "bio": "Kayaks, dry suits and a sheltered bay. Beginners welcome.", "phone": "+298 00 00 09", "activities": [{"id": "a1", "t": "Kayaking at Leynar", "cat": "rent", "isl": "Streymoy", "place": "Leynar", "dur": "2 hrs +", "price": 300, "mo": [4, 5, 6, 7, 8], "d": "Rent a sea kayak or sit-on-top and paddle the lake or the sheltered bay at Leynar.", "inc": ["Kayak and paddle", "Life vest and dry suit", "Safety briefing"], "km": "", "lvl": "Easy", "max": 16, "slots": []}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": "", "email": ""}, "ex-mykines": {"name": "Mykines Trips", "role": "guide", "island": "Mykines", "village": "Mykines", "languages": "Faroese, English", "since": "2012", "bio": "Born on Mykines, where twelve people live all year and a million seabirds come each summer.", "phone": "+298 00 00 02", "email": "example@mykines.fo", "activities": [{"id": "a1", "t": "Puffins of Mykines", "cat": "hike", "isl": "Mykines", "place": "Mykines village", "dur": "Full day", "price": 1200, "mo": [4, 5, 6, 7], "d": "Ferry from Sørvágur, then hike across the footbridge to Mykineshólmur and its lighthouse. From May to August thousands of puffins nest right beside the path.", "inc": ["Return ferry", "Guide and trail fee", "Packed lunch"], "km": "7 km", "lvl": "Moderate", "max": 10, "feat": true, "slots": []}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": ""}, "ex-rib": {"name": "Vágar RIB", "role": "fisher", "island": "Vágar", "village": "Sørvágur", "languages": "Faroese, English", "since": "2020", "bio": "Skipper with a fast RIB and a love for the western sea stacks.", "phone": "+298 00 00 05", "activities": [{"id": "a1", "t": "Drangarnir by RIB", "cat": "boat", "isl": "Vágar", "place": "Sørvágur", "dur": "1.5 hrs", "price": 890, "mo": [4, 5, 6, 7, 8], "d": "A fast ride out to the Drangarnir sea stacks and Tindhólmur. Sailing depends on sea and wind.", "inc": ["Flotation suit", "Experienced skipper"], "km": "", "lvl": "Moderate", "max": 10, "slots": []}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": "", "email": ""}, "ex-saksun": {"name": "Village & Saga Tours", "role": "other", "island": "Streymoy", "village": "Tórshavn", "languages": "Faroese, English, Danish, Norwegian", "since": "2015", "bio": "Local historian sharing the stories behind turf roofs and old churches.", "phone": "+298 00 00 10", "activities": [{"id": "a1", "t": "Saksun & Tjørnuvík", "cat": "culture", "isl": "Streymoy", "place": "Saksun", "dur": "5 hrs", "price": 690, "mo": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "d": "Drive to the turf-roofed church and tidal lagoon at Saksun and the surf bay at Tjørnuvík, with a stop at the Dúvugarðar farm museum.", "inc": ["Transport from Tórshavn", "Guide", "Museum entry"], "km": "", "lvl": "Easy", "max": 8, "slots": [{"d": "2026-10-28", "h": "18:00", "n": 2}, {"d": "2026-10-31", "h": "18:00", "n": 8}, {"d": "2026-11-02", "h": "18:00", "n": 2}, {"d": "2026-11-04", "h": "18:00", "n": 8}, {"d": "2026-11-07", "h": "18:00", "n": 8}, {"d": "2026-11-09", "h": "18:00", "n": 2}, {"d": "2026-11-11", "h": "18:00", "n": 2}, {"d": "2026-11-14", "h": "18:00", "n": 2}, {"d": "2026-11-16", "h": "18:00", "n": 8}, {"d": "2026-11-18", "h": "18:00", "n": 8}, {"d": "2026-11-21", "h": "18:00", "n": 2}, {"d": "2026-11-23", "h": "18:00", "n": 2}, {"d": "2026-11-25", "h": "18:00", "n": 8}, {"d": "2026-11-28", "h": "18:00", "n": 2}, {"d": "2026-11-30", "h": "18:00", "n": 8}, {"d": "2026-12-02", "h": "18:00", "n": 2}, {"d": "2026-12-05", "h": "18:00", "n": 8}, {"d": "2026-12-07", "h": "18:00", "n": 8}, {"d": "2026-12-09", "h": "18:00", "n": 8}, {"d": "2026-12-12", "h": "18:00", "n": 5}, {"d": "2026-12-14", "h": "18:00", "n": 5}, {"d": "2026-12-16", "h": "18:00", "n": 8}, {"d": "2026-12-19", "h": "18:00", "n": 0}, {"d": "2026-12-21", "h": "18:00", "n": 8}, {"d": "2026-12-23", "h": "18:00", "n": 8}, {"d": "2026-12-26", "h": "18:00", "n": 2}, {"d": "2026-12-28", "h": "18:00", "n": 5}, {"d": "2026-12-30", "h": "18:00", "n": 8}, {"d": "2027-01-02", "h": "18:00", "n": 5}, {"d": "2027-01-04", "h": "18:00", "n": 8}]}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": "", "email": ""}, "ex-sandur": {"name": "Sandoy Farm", "role": "farmer", "island": "Sandoy", "village": "Sandur", "languages": "Faroese, Danish, English", "since": "2021", "bio": "Sheep farmers on quiet Sandoy. Join us on the farm and stay for dinner.", "phone": "+298 00 00 08", "activities": [{"id": "a1", "t": "Farm Day and Lamb Dinner", "cat": "culture", "isl": "Sandoy", "place": "Sandur", "dur": "4 hrs", "price": 820, "mo": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "d": "Help bring in the sheep, see how wool and skerpikjøt are made, then sit down to a traditional lamb dinner.", "inc": ["Farm tour", "Dinner", "Local beer available"], "km": "", "lvl": "Easy", "max": 12, "slots": [{"d": "2026-10-29", "h": "10:00", "n": 12}, {"d": "2026-11-02", "h": "10:00", "n": 2}, {"d": "2026-11-03", "h": "10:00", "n": 0}, {"d": "2026-11-05", "h": "10:00", "n": 9}, {"d": "2026-11-09", "h": "10:00", "n": 12}, {"d": "2026-11-10", "h": "10:00", "n": 12}, {"d": "2026-11-12", "h": "10:00", "n": 0}, {"d": "2026-11-16", "h": "10:00", "n": 0}, {"d": "2026-11-17", "h": "10:00", "n": 9}, {"d": "2026-11-19", "h": "10:00", "n": 9}, {"d": "2026-11-23", "h": "10:00", "n": 12}, {"d": "2026-11-24", "h": "10:00", "n": 12}, {"d": "2026-11-26", "h": "10:00", "n": 9}, {"d": "2026-11-30", "h": "10:00", "n": 12}, {"d": "2026-12-01", "h": "10:00", "n": 12}, {"d": "2026-12-03", "h": "10:00", "n": 9}, {"d": "2026-12-07", "h": "10:00", "n": 9}, {"d": "2026-12-08", "h": "10:00", "n": 12}, {"d": "2026-12-10", "h": "10:00", "n": 12}, {"d": "2026-12-14", "h": "10:00", "n": 9}, {"d": "2026-12-15", "h": "10:00", "n": 9}, {"d": "2026-12-17", "h": "10:00", "n": 9}, {"d": "2026-12-21", "h": "10:00", "n": 12}, {"d": "2026-12-22", "h": "10:00", "n": 0}, {"d": "2026-12-24", "h": "10:00", "n": 9}, {"d": "2026-12-28", "h": "10:00", "n": 2}, {"d": "2026-12-29", "h": "10:00", "n": 0}, {"d": "2026-12-31", "h": "10:00", "n": 12}, {"d": "2027-01-04", "h": "10:00", "n": 12}, {"d": "2027-01-05", "h": "10:00", "n": 12}]}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": "", "email": ""}, "ex-vagar-guides": {"name": "Vágar Mountain Guides", "role": "guide", "island": "Vágar", "village": "Miðvágur", "languages": "Faroese, English, Danish", "since": "2016", "bio": "Two brothers who grew up on the slopes above Sørvágsvatn. We know where the fog rolls in and where the best view waits.", "phone": "+298 00 00 01", "email": "example@vagarguides.fo", "activities": [{"id": "a1", "t": "Lake Above the Ocean: Trælanípa", "cat": "hike", "isl": "Vágar", "place": "Miðvágur", "dur": "3 hrs", "price": 350, "mo": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "d": "Walk along Sørvágsvatn to the cliff where the lake seems to hover above the Atlantic, then on to Bøsdalafossur, the waterfall that drops straight into the sea.", "inc": ["Local guide", "Trail fee", "Coffee and cake at the waterfall"], "km": "6.2 km", "lvl": "Easy", "max": 12, "slots": [{"d": "2026-10-29", "h": "18:00", "n": 0}, {"d": "2026-10-30", "h": "18:00", "n": 12}, {"d": "2026-10-31", "h": "18:00", "n": 9}, {"d": "2026-11-05", "h": "18:00", "n": 12}, {"d": "2026-11-06", "h": "18:00", "n": 12}, {"d": "2026-11-07", "h": "18:00", "n": 12}, {"d": "2026-11-12", "h": "18:00", "n": 9}, {"d": "2026-11-13", "h": "18:00", "n": 0}, {"d": "2026-11-14", "h": "18:00", "n": 0}, {"d": "2026-11-19", "h": "18:00", "n": 12}, {"d": "2026-11-20", "h": "18:00", "n": 12}, {"d": "2026-11-21", "h": "18:00", "n": 9}, {"d": "2026-11-26", "h": "18:00", "n": 12}, {"d": "2026-11-27", "h": "18:00", "n": 9}, {"d": "2026-11-28", "h": "18:00", "n": 2}, {"d": "2026-12-03", "h": "18:00", "n": 12}, {"d": "2026-12-04", "h": "18:00", "n": 12}, {"d": "2026-12-05", "h": "18:00", "n": 9}, {"d": "2026-12-10", "h": "18:00", "n": 12}, {"d": "2026-12-11", "h": "18:00", "n": 9}, {"d": "2026-12-12", "h": "18:00", "n": 9}, {"d": "2026-12-17", "h": "18:00", "n": 12}, {"d": "2026-12-18", "h": "18:00", "n": 9}, {"d": "2026-12-19", "h": "18:00", "n": 9}, {"d": "2026-12-24", "h": "18:00", "n": 9}, {"d": "2026-12-25", "h": "18:00", "n": 12}, {"d": "2026-12-26", "h": "18:00", "n": 2}, {"d": "2026-12-31", "h": "18:00", "n": 0}, {"d": "2027-01-01", "h": "18:00", "n": 12}, {"d": "2027-01-02", "h": "18:00", "n": 9}]}, {"id": "a2", "t": "Hiking Gear Rental", "cat": "rent", "isl": "Vágar", "place": "Sørvágur", "dur": "Per day", "price": 150, "mo": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "d": "Boots, poles and rain gear for anyone who arrives without. Pick up near the airport.", "inc": ["Hiking boots", "Poles", "Rain set"], "km": "", "lvl": "", "max": null, "slots": [{"d": "2026-10-29", "h": "18:00", "n": 8}, {"d": "2026-10-30", "h": "18:00", "n": 5}, {"d": "2026-11-03", "h": "18:00", "n": 2}, {"d": "2026-11-05", "h": "18:00", "n": 0}, {"d": "2026-11-06", "h": "18:00", "n": 8}, {"d": "2026-11-10", "h": "18:00", "n": 5}, {"d": "2026-11-12", "h": "18:00", "n": 0}, {"d": "2026-11-13", "h": "18:00", "n": 8}, {"d": "2026-11-17", "h": "18:00", "n": 5}, {"d": "2026-11-19", "h": "18:00", "n": 8}, {"d": "2026-11-20", "h": "18:00", "n": 2}, {"d": "2026-11-24", "h": "18:00", "n": 8}, {"d": "2026-11-26", "h": "18:00", "n": 5}, {"d": "2026-11-27", "h": "18:00", "n": 5}, {"d": "2026-12-01", "h": "18:00", "n": 5}, {"d": "2026-12-03", "h": "18:00", "n": 0}, {"d": "2026-12-04", "h": "18:00", "n": 8}, {"d": "2026-12-08", "h": "18:00", "n": 2}, {"d": "2026-12-10", "h": "18:00", "n": 8}, {"d": "2026-12-11", "h": "18:00", "n": 2}, {"d": "2026-12-15", "h": "18:00", "n": 8}, {"d": "2026-12-17", "h": "18:00", "n": 8}, {"d": "2026-12-18", "h": "18:00", "n": 8}, {"d": "2026-12-22", "h": "18:00", "n": 8}, {"d": "2026-12-24", "h": "18:00", "n": 8}, {"d": "2026-12-25", "h": "18:00", "n": 8}, {"d": "2026-12-29", "h": "18:00", "n": 0}, {"d": "2026-12-31", "h": "18:00", "n": 8}, {"d": "2027-01-01", "h": "18:00", "n": 0}, {"d": "2027-01-05", "h": "18:00", "n": 8}]}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": ""}, "ex-vestmanna": {"name": "Hans í Vestmanna", "role": "fisher", "island": "Streymoy", "village": "Vestmanna", "languages": "Faroese, English", "since": "2008", "bio": "Fisherman for 30 years. In summer I take guests under the bird cliffs where my grandfather once caught fulmar.", "phone": "+298 00 00 04", "activities": [{"id": "a1", "t": "Vestmanna Bird Cliffs", "cat": "boat", "isl": "Streymoy", "place": "Vestmanna harbour", "dur": "2 hrs", "price": 495, "mo": [3, 4, 5, 6, 7, 8], "d": "Sail beneath 600-metre cliffs, through sea caves and narrow sounds alive with nesting seabirds.", "inc": ["Helmet and rain gear", "Stories of bird catching"], "km": "", "lvl": "Easy", "max": 30, "slots": []}, {"id": "a2", "t": "Morning Fishing Trip", "cat": "boat", "isl": "Streymoy", "place": "Vestmanna harbour", "dur": "3 hrs", "price": 650, "mo": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], "d": "Catch cod and saithe with hand lines. The catch is grilled on board or packed for you to take home.", "inc": ["Fishing gear", "Barbecue on board", "Warm clothing"], "km": "", "lvl": "Easy", "max": 8, "slots": [{"d": "2026-10-29", "h": "10:00", "n": 0}, {"d": "2026-10-29", "h": "14:00", "n": 8}, {"d": "2026-11-01", "h": "10:00", "n": 5}, {"d": "2026-11-01", "h": "14:00", "n": 5}, {"d": "2026-11-02", "h": "10:00", "n": 2}, {"d": "2026-11-02", "h": "14:00", "n": 5}, {"d": "2026-11-05", "h": "10:00", "n": 2}, {"d": "2026-11-05", "h": "14:00", "n": 0}, {"d": "2026-11-08", "h": "10:00", "n": 8}, {"d": "2026-11-08", "h": "14:00", "n": 5}, {"d": "2026-11-09", "h": "10:00", "n": 5}, {"d": "2026-11-09", "h": "14:00", "n": 2}, {"d": "2026-11-12", "h": "10:00", "n": 2}, {"d": "2026-11-12", "h": "14:00", "n": 8}, {"d": "2026-11-15", "h": "10:00", "n": 5}, {"d": "2026-11-15", "h": "14:00", "n": 8}, {"d": "2026-11-16", "h": "10:00", "n": 8}, {"d": "2026-11-16", "h": "14:00", "n": 2}, {"d": "2026-11-19", "h": "10:00", "n": 0}, {"d": "2026-11-19", "h": "14:00", "n": 8}, {"d": "2026-11-22", "h": "10:00", "n": 5}, {"d": "2026-11-22", "h": "14:00", "n": 8}, {"d": "2026-11-23", "h": "10:00", "n": 8}, {"d": "2026-11-23", "h": "14:00", "n": 2}, {"d": "2026-11-26", "h": "10:00", "n": 0}, {"d": "2026-11-26", "h": "14:00", "n": 2}, {"d": "2026-11-29", "h": "10:00", "n": 2}, {"d": "2026-11-29", "h": "14:00", "n": 2}, {"d": "2026-11-30", "h": "10:00", "n": 8}, {"d": "2026-11-30", "h": "14:00", "n": 8}, {"d": "2026-12-03", "h": "10:00", "n": 8}, {"d": "2026-12-03", "h": "14:00", "n": 8}, {"d": "2026-12-06", "h": "10:00", "n": 8}, {"d": "2026-12-06", "h": "14:00", "n": 0}, {"d": "2026-12-07", "h": "10:00", "n": 5}, {"d": "2026-12-07", "h": "14:00", "n": 8}, {"d": "2026-12-10", "h": "10:00", "n": 2}, {"d": "2026-12-10", "h": "14:00", "n": 2}, {"d": "2026-12-13", "h": "10:00", "n": 8}, {"d": "2026-12-13", "h": "14:00", "n": 0}]}], "example": true, "published": true, "createdAt": 1793016040969, "updatedAt": 1793016040969, "web": "", "email": ""}};const SEED_START="2026-10-28";
+ const KEY="efo-demo-db-v1";
+ const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+ function shiftedSeed(){const today=new Date();today.setHours(12,0,0,0);const start=new Date(SEED_START+"T12:00:00");const off=Math.max(0,Math.round((today-start)/864e5));
+  const out=JSON.parse(JSON.stringify(SEED));if(off)for(const h of Object.values(out))for(const a of h.activities||[])a.slots=(a.slots||[]).map(s=>{const d=new Date(s.d+"T12:00:00");d.setDate(d.getDate()+off);return {...s,d:iso(d)}});return out}
+ let store;try{store=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){}
+ if(!store||!store.hosts)store={hosts:{},bookings:{}};
+ const seeded=shiftedSeed();for(const k in seeded)if(!store.hosts[k]||store.hosts[k].example)store.hosts[k]={...seeded[k],bookingStatus:(store.hosts[k]||{}).bookingStatus||{}};
+ const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){}};save();
+ const subs={hosts:[],bookings:[]};
+ const snap=col=>({docs:Object.entries(store[col]).map(([id,d])=>({id,exists:true,data:()=>d,metadata:{fromCache:false,hasPendingWrites:false}}))});
+ const notify=col=>subs[col].forEach(f=>{try{f(snap(col))}catch(e){console.error(e)}});
+ const db={collection(col){return{onSnapshot(next){subs[col]=subs[col]||[];subs[col].push(next);setTimeout(()=>next(snap(col)),0);return()=>{subs[col]=subs[col].filter(f=>f!==next)}}}},
+  doc(path){const [col,id]=path.split("/");return{async set(data){store[col]=store[col]||{};store[col][id]=JSON.parse(JSON.stringify(data));save();notify(col)},async get(){const d=store[col]&&store[col][id];return{id,exists:!!d,data:()=>d}}}}};
+ let uid;try{uid=localStorage.getItem("efo-demo-uid")}catch(e){}
+ if(!uid){uid="u_local_"+Math.random().toString(36).slice(2,12);try{localStorage.setItem("efo-demo-uid",uid)}catch(e){}}
+ const user={id:async()=>uid,can:async()=>true,isOwner:async()=>true,canEdit:async()=>true};
+ window.claude={use:async n=>n==="db"?db:n==="user"?user:null};
+})();
+</script>
+<header class="top" id="top"><div class="wrap">
+  <button class="logo" id="home" type="button"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M2 26 L11 10 L16 17 L21 8 L30 26Z" fill="#c98a34"/><path d="M2 26 L11 10 L14 15 L9 26Z" fill="#e3a756"/></svg>Explore FO</button>
+  <nav class="tabs" aria-label="Sections">
+    <a href="#explore" data-v="explore" data-i="nav_explore"></a>
+    <a href="#hosts" data-v="hosts" data-i="nav_hosts"></a>
+    <a href="#trips" data-v="trips" data-i="nav_trips"></a>
+    <a href="#dashboard" data-v="dashboard" data-i="nav_dash"></a>
+  </nav>
+  <select class="lang" id="lang" aria-label="Language"><option value="en">EN · English</option><option value="de">DE · Deutsch</option><option value="es">ES · Español</option></select>
+</div></header>
+
+<div id="v-explore">
+  <div class="hero">
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <div class="wrap"><div class="hero-copy">
+      <span class="eyebrow" data-i="hero_eyebrow"></span>
+      <h1 id="hero-h1"></h1>
+      <p data-i="hero_p"></p>
+      <div class="searchbox" role="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" data-iph="search_ph">
+      </div>
+      <div class="hero-stats" id="stats"></div>
+    </div></div>
+  </div>
+  <div class="tiles"><div class="wrap" id="tiles"></div></div>
+
+  <section id="feat-sec" hidden><div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow" data-i="feat_eyebrow"></span><h2 data-i="feat_h"></h2></div></div>
+    <article class="feature" id="feature"></article>
+  </div></section>
+
+  <div class="rail" id="browse"><div class="wrap">
+    <h2><span data-i="all_exp"></span><small id="count"></small></h2>
+    <select id="island" aria-label="Island"></select>
+    <select id="month" aria-label="Month"></select>
+    <input class="date-in" type="date" id="date" aria-label="Date">
+    <select id="sort" aria-label="Sort"></select>
+    <button class="toggle" id="saved" aria-pressed="false"></button>
+  </div></div>
+  <div class="wrap"><div class="grid" id="grid"></div></div>
+
+  <section><div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow" data-i="isl_eyebrow"></span><h2 data-i="isl_h"></h2></div></div>
+    <div class="islands" id="islands"></div>
+  </div></section>
+
+  <section><div class="wrap">
+    <div class="sec-head"><div><span class="eyebrow" data-i="tips_eyebrow"></span><h2 data-i="tips_h"></h2></div></div>
+    <div class="tips" id="tips"></div>
+  </div></section>
+
+  <section><div class="wrap"><div class="band">
+    <div><span class="eyebrow" style="color:var(--on-sea-2)" data-i="band_eyebrow"></span><h2 data-i="band_h"></h2><p data-i="band_p"></p></div>
+    <div style="display:grid;gap:16px"><div class="roles" id="band-roles"></div><a class="btn turf" href="#dashboard" style="justify-self:start" data-i="band_btn"></a></div>
+  </div></div></section>
+</div>
+
+<div id="v-hosts" hidden><div class="wrap">
+  <div class="page-head"><span class="eyebrow" data-i="hosts_eyebrow"></span><h1 data-i="nav_hosts"></h1><p data-i="hosts_p"></p></div>
+  <div class="chipbar" id="rolebar"></div>
+  <div class="hosts" id="hostgrid"></div>
+</div></div>
+
+<div id="v-trips" hidden><div class="wrap">
+  <div class="page-head"><span class="eyebrow" data-i="trips_eyebrow"></span><h1 data-i="nav_trips"></h1><p data-i="trips_p"></p></div>
+  <div id="trips" class="trips"></div>
+</div></div>
+
+<div id="v-dashboard" hidden><div class="wrap">
+  <div class="page-head"><span class="eyebrow" data-i="dash_eyebrow"></span><h1 id="dash-title"></h1><p id="dash-sub"></p></div>
+  <div id="dash"></div>
+</div></div>
+
+<footer><div class="wrap"><span><b>Demo.</b> Bookings and host profiles are saved only on this device. No real payments are taken.</span><span data-i="footer1"></span><span data-i="footer2"></span></div></footer>
+
+<div class="scrim" id="scrim" hidden><div class="sheet" role="dialog" aria-modal="true" id="sheet"></div></div>
+
+<script>
+/* ================= i18n ================= */
+const TX={
+en:{nav_explore:"Explore",nav_hosts:"Local hosts",nav_dash:"For hosts",
+hero_eyebrow:"Føroyar · 62°N 7°W · 18 islands",hero_h1:"Every way to <em>experience</em> the Faroe Islands.",hero_p:"Hike with mountain guides, fish with local fishermen, eat dinner on a family farm or rent a kayak. Every listing is run by a Faroese host, with live availability.",search_ph:"Try puffins, Mykines, kayak, dinner…",
+st_exp:"experiences",st_hosts:"local hosts",st_isl:"islands",feat_eyebrow:"Pick of the season",feat_h:"Don't leave without this",all_exp:"All experiences",found:"found",loading:"loading…",
+all_isl:"All islands",any_month:"Any month",sort_new:"Newest first",sort_low:"Price: low to high",sort_high:"Price: high to low",saved:"♥ Saved",
+isl_eyebrow:"Browse by island",isl_h:"Where are you staying?",isl_none:"Islands appear here once hosts add activities.",tips_eyebrow:"Before you go",tips_h:"Good to know",
+tip1h:"Weather turns fast",tip1p:"Fog can close a mountain hike within the hour. Check road and wind conditions at landsverk.fo and always pack waterproofs.",tip2h:"Hiking fees",tip2p:"Many trails cross private farmland and farmers charge a small fee. Stay on the path, mind the sheep and close the gates.",tip3h:"What is heimablídni?",tip3p:"Faroese home hospitality. Eat skerpikjøt, ræst fish and local lamb at a family's own table. Seats are few, so book ahead.",tip4h:"Ferries and helicopters",tip4p:"Mykines and the smaller islands are served by Strandfaraskip Landsins. Sailings are cancelled in rough seas, so keep a spare day.",
+band_eyebrow:"For local hosts",band_h:"Guide, fisherman, farmer or homeowner?",band_p:"Create your own host profile, list your activities and open the dates you're free. Guests contact you directly, and there's no commission.",band_btn:"Create your host profile",
+hosts_eyebrow:"The people behind the trips",hosts_p:"Every experience here is run by someone who lives on the islands. Meet them, read their story and see what they offer.",all_hosts:"All hosts",
+dash_eyebrow:"Host dashboard",footer1:"Explore FO brings Faroese experiences together. Booking and payment happen directly with each host.",footer2:"Listings marked \"Example\" are samples.",
+example:"Example",example_listing:"Example listing",example_host:"Example host",dkk_pp:"DKK / person",free:"Free",next:"Next",no_dates:"Ask for dates",season_from:"Season from {m}",
+e_load_h:"Loading experiences…",e_sign_h:"Sign in to see live listings",e_sign_p:"The listings on this page are stored with Claude. Open it while signed in to claude.ai to browse them.",e_none_h:"No experiences listed yet",e_none_p:"Hosts add their activities from the host dashboard.",be_first:"Be the first host",nomatch_h:"Nothing matches",nomatch_saved:"Tap the heart on any card to save it.",nomatch_p:"Try another island, month or date.",
+duration:"Duration",distance:"Distance",level:"Level",group:"Group size",upto:"Up to {n}",per_person:"Per person",when_runs:"Season",included:"What's included",your_host:"Your host",view_host:"View host profile",weather_note:"Trips may be cancelled in severe weather. Agree on price and cancellation terms with your host.",
+contact:"Contact",activities:"Activities",no_acts:"No activities listed yet.",speaks:"Speaks {x}",since:"Hosting since {x}",no_contact:"This host hasn't added contact details yet.",copy:"Copy",copied:"Copied",selected:"Selected — copy it",phone:"Phone",email:"Email",website:"Website",
+cal_h:"Pick a date",cal_free:"Available",cal_full:"Fully booked",cal_today:"Today",cal_pick:"Tap a green date to see the times.",cal_none_month:"No open dates this month. Try the next month.",cal_none:"The host hasn't opened any dates yet. Contact them to ask.",spots:"{n} spots left",spot1:"1 spot left",full:"Full",
+req_h:"Request {t}",req_p:"Send this message to the host by SMS, phone or email. They'll confirm your booking.",req_guests:"Guests",copy_msg:"Copy message",
+lb_loading:"Loading hosts…",lb_sign_h:"Sign in to see the hosts",lb_sign_p:"Open this page while signed in to claude.ai.",lb_none:"No hosts in this group yet",acts_n:"{n} activities",acts_1:"1 activity",
+d_connect:"Connecting…",d_sign_h:"Sign in to become a host",d_sign_p:"Host profiles are saved with your claude.ai account. Open this page while signed in to create yours.",d_noperm_h:"You can view, but not publish yet",d_noperm_p:"To create a host profile you need Contributor access to this page. Ask the person who shared it with you to change your access.",
+d_hi:"Hi, {x}",d_new:"Create your host profile",d_sub_new:"Tell guests who you are. It takes two minutes, and you can add activities right after.",d_sub:"Manage your profile, activities and open dates. Changes go live for every visitor as soon as you save.",
+d_how:"How it works",d_s1:"Create your host profile with a short story about you.",d_s2:"Add each activity you offer: a hike, a fishing trip, a dinner, a rental.",d_s3:"Open the dates and times you're free. Guests see them in a calendar.",d_s4:"Guests contact you directly to book. No commission.",
+d_myacts:"Your activities",d_add:"+ Add activity",d_noacts_h:"No activities yet",d_noacts_p:"Add your first one so guests can find you.",edit:"Edit",del:"Delete",confirm_del:"Confirm delete",open_dates:"{n} open times",
+location:"Location",languages:"Languages",listed:"Listed",visible:"Visible to guests",hidden:"Hidden",edit_profile:"Edit profile",preview:"Preview as guest",hide_l:"Hide my listings",show_l:"Show my listings",
+f_profile:"Your host profile",f_edit_profile:"Edit your profile",f_name:"Your name or business name",f_kind:"What kind of host are you?",f_island:"Island",f_village:"Village or town",f_about:"About you",f_about_h:"Who are you, and why should guests come with you?",f_lang:"Languages",f_since:"Hosting since",f_web:"Website or Facebook (optional)",f_contact_note:"Your phone and email are shown to guests so they can book with you.",
+save_profile:"Save profile",create_profile:"Create profile",cancel:"Cancel",saving:"Saving…",
+f_new_act:"New activity",f_edit_act:"Edit activity",f_title:"Title",f_cat:"Category",f_meet:"Meeting point",f_price:"Price per person (DKK)",f_max:"Max guests",f_km:"Distance (hikes)",f_level:"Level",f_lvl_none:"Not relevant",f_months:"Season (months it runs)",f_desc:"Description",f_inc:"What's included",f_inc_h:"One item per line",publish_act:"Publish activity",save_changes:"Save changes",
+sl_h:"Open dates and times",sl_p:"Guests see these in a calendar. Lower the spots as you take bookings; set to 0 when full.",sl_one:"One date",sl_weekly:"Weekly",sl_date:"Date",sl_time:"Time",sl_spots:"Spots",sl_day:"Weekday",sl_weeks:"For",sl_wk:"{n} weeks",sl_add:"Add",sl_none:"No open times yet.",sl_count:"{n} upcoming times",
+m_saved_p:"Profile saved.",m_created:"Profile created. Now add your first activity.",m_act_saved:"Changes saved.",m_act_pub:"Activity published. It's now live on Explore.",m_deleted:"Activity deleted.",m_hidden:"Your listings are hidden from guests.",m_shown:"Your listings are visible again.",m_name:"Add your name first.",m_title:"Give the activity a title.",m_perm:"You don't have permission to publish here. Ask the page owner for Contributor access.",m_quota:"The platform is full right now. Contact the page owner.",m_fail:"Couldn't save. Check your connection and try again.",
+cat_hike:"Hiking",cat_hike_d:"Cliffs, peaks & lighthouses",cat_boat:"Boat trips",cat_boat_d:"Bird cliffs, fishing & sea stacks",cat_food:"Home dining",cat_food_d:"Heimablídni with locals",cat_rent:"Rentals",cat_rent_d:"Kayaks, bikes & gear",cat_culture:"Culture & farm",cat_culture_d:"Villages, farms & history",
+role_guide:"Mountain guide",role_fisher:"Fisherman / skipper",role_farmer:"Farmer",role_home:"Home host",role_rental:"Rentals",role_other:"Local host",
+lv_Easy:"Easy",lv_Moderate:"Moderate",lv_Demanding:"Demanding",lang_note:"Listings are shown in the language the host wrote them in."},
+de:{nav_explore:"Entdecken",nav_hosts:"Einheimische Gastgeber",nav_dash:"Für Gastgeber",
+hero_eyebrow:"Føroyar · 62°N 7°W · 18 Inseln",hero_h1:"Die Färöer <em>erleben</em>, auf jede Art.",hero_p:"Wandern mit Bergführern, fischen mit Fischern, Abendessen auf dem Familienhof oder ein Kajak mieten. Jedes Angebot stammt von färöischen Gastgebern, mit aktuellen freien Terminen.",search_ph:"Papageitaucher, Mykines, Kajak, Abendessen…",
+st_exp:"Erlebnisse",st_hosts:"Gastgeber",st_isl:"Inseln",feat_eyebrow:"Tipp der Saison",feat_h:"Das sollten Sie nicht verpassen",all_exp:"Alle Erlebnisse",found:"gefunden",loading:"lädt…",
+all_isl:"Alle Inseln",any_month:"Jeder Monat",sort_new:"Neueste zuerst",sort_low:"Preis: aufsteigend",sort_high:"Preis: absteigend",saved:"♥ Gemerkt",
+isl_eyebrow:"Nach Insel",isl_h:"Wo übernachten Sie?",isl_none:"Inseln erscheinen hier, sobald Gastgeber Angebote eintragen.",tips_eyebrow:"Vor der Reise",tips_h:"Gut zu wissen",
+tip1h:"Das Wetter wechselt schnell",tip1p:"Nebel kann eine Bergtour innerhalb einer Stunde unmöglich machen. Straßen und Wind auf landsverk.fo prüfen und immer Regenkleidung mitnehmen.",tip2h:"Wandergebühren",tip2p:"Viele Wege führen über privates Weideland, die Bauern verlangen eine kleine Gebühr. Auf dem Weg bleiben, Schafe nicht stören, Gatter schließen.",tip3h:"Was ist Heimablídni?",tip3p:"Färöische Gastfreundschaft zu Hause. Skerpikjøt, Ræst-Fisch und Lamm am Familientisch. Die Plätze sind knapp, früh buchen.",tip4h:"Fähren und Hubschrauber",tip4p:"Mykines und die kleinen Inseln werden von Strandfaraskip Landsins angefahren. Bei rauer See fallen Fahrten aus, planen Sie einen Reservetag ein.",
+band_eyebrow:"Für einheimische Gastgeber",band_h:"Bergführer, Fischer, Bauer oder Gastgeber?",band_p:"Erstellen Sie Ihr Gastgeberprofil, tragen Sie Ihre Angebote und freien Termine ein. Gäste melden sich direkt bei Ihnen, ohne Provision.",band_btn:"Gastgeberprofil erstellen",
+hosts_eyebrow:"Die Menschen hinter den Touren",hosts_p:"Jedes Erlebnis wird von jemandem angeboten, der auf den Inseln lebt. Lernen Sie sie kennen und sehen Sie, was sie anbieten.",all_hosts:"Alle Gastgeber",
+dash_eyebrow:"Gastgeber-Bereich",footer1:"Explore FO bündelt Erlebnisse auf den Färöern. Buchung und Bezahlung direkt beim Gastgeber.",footer2:"Mit „Beispiel“ markierte Angebote sind Muster.",
+example:"Beispiel",example_listing:"Beispielangebot",example_host:"Beispiel-Gastgeber",dkk_pp:"DKK / Person",free:"Kostenlos",next:"Nächster Termin",no_dates:"Termin anfragen",season_from:"Saison ab {m}",
+e_load_h:"Erlebnisse werden geladen…",e_sign_h:"Anmelden, um Angebote zu sehen",e_sign_p:"Die Angebote sind bei Claude gespeichert. Öffnen Sie die Seite angemeldet bei claude.ai.",e_none_h:"Noch keine Erlebnisse",e_none_p:"Gastgeber tragen ihre Angebote im Gastgeber-Bereich ein.",be_first:"Erster Gastgeber werden",nomatch_h:"Keine Treffer",nomatch_saved:"Tippen Sie auf das Herz, um ein Erlebnis zu merken.",nomatch_p:"Versuchen Sie eine andere Insel, einen anderen Monat oder ein anderes Datum.",
+duration:"Dauer",distance:"Strecke",level:"Niveau",group:"Gruppengröße",upto:"Bis zu {n}",per_person:"Pro Person",when_runs:"Saison",included:"Inklusive",your_host:"Ihr Gastgeber",view_host:"Gastgeberprofil ansehen",weather_note:"Touren können bei Unwetter ausfallen. Preis und Stornobedingungen mit dem Gastgeber vereinbaren.",
+contact:"Kontakt",activities:"Angebote",no_acts:"Noch keine Angebote.",speaks:"Spricht {x}",since:"Gastgeber seit {x}",no_contact:"Dieser Gastgeber hat noch keine Kontaktdaten angegeben.",copy:"Kopieren",copied:"Kopiert",selected:"Markiert — jetzt kopieren",phone:"Telefon",email:"E-Mail",website:"Website",
+cal_h:"Datum wählen",cal_free:"Frei",cal_full:"Ausgebucht",cal_today:"Heute",cal_pick:"Tippen Sie auf ein grünes Datum, um die Uhrzeiten zu sehen.",cal_none_month:"Keine freien Termine in diesem Monat. Versuchen Sie den nächsten.",cal_none:"Der Gastgeber hat noch keine Termine freigegeben. Fragen Sie direkt an.",spots:"Noch {n} Plätze",spot1:"Noch 1 Platz",full:"Ausgebucht",
+req_h:"Anfrage für {t}",req_p:"Schicken Sie diese Nachricht per SMS, Telefon oder E-Mail an den Gastgeber. Er bestätigt Ihre Buchung.",req_guests:"Gäste",copy_msg:"Nachricht kopieren",
+lb_loading:"Gastgeber werden geladen…",lb_sign_h:"Anmelden, um Gastgeber zu sehen",lb_sign_p:"Öffnen Sie die Seite angemeldet bei claude.ai.",lb_none:"Noch keine Gastgeber in dieser Gruppe",acts_n:"{n} Angebote",acts_1:"1 Angebot",
+d_connect:"Verbinde…",d_sign_h:"Anmelden, um Gastgeber zu werden",d_sign_p:"Profile werden mit Ihrem claude.ai-Konto gespeichert. Öffnen Sie die Seite angemeldet.",d_noperm_h:"Nur Ansicht",d_noperm_p:"Für ein Gastgeberprofil brauchen Sie Mitwirkenden-Zugriff. Bitten Sie die Person, die die Seite geteilt hat, darum.",
+d_hi:"Hallo, {x}",d_new:"Gastgeberprofil erstellen",d_sub_new:"Erzählen Sie den Gästen, wer Sie sind. Das dauert zwei Minuten.",d_sub:"Profil, Angebote und freie Termine verwalten. Änderungen sind sofort für alle sichtbar.",
+d_how:"So funktioniert's",d_s1:"Profil mit einer kurzen Geschichte über Sie erstellen.",d_s2:"Jedes Angebot eintragen: Wanderung, Angeltour, Abendessen, Verleih.",d_s3:"Freie Tage und Uhrzeiten freigeben. Gäste sehen sie im Kalender.",d_s4:"Gäste buchen direkt bei Ihnen. Keine Provision.",
+d_myacts:"Ihre Angebote",d_add:"+ Angebot hinzufügen",d_noacts_h:"Noch keine Angebote",d_noacts_p:"Tragen Sie Ihr erstes Angebot ein.",edit:"Bearbeiten",del:"Löschen",confirm_del:"Wirklich löschen",open_dates:"{n} freie Termine",
+location:"Ort",languages:"Sprachen",listed:"Status",visible:"Für Gäste sichtbar",hidden:"Ausgeblendet",edit_profile:"Profil bearbeiten",preview:"Als Gast ansehen",hide_l:"Angebote ausblenden",show_l:"Angebote einblenden",
+f_profile:"Ihr Gastgeberprofil",f_edit_profile:"Profil bearbeiten",f_name:"Name oder Firmenname",f_kind:"Welche Art Gastgeber sind Sie?",f_island:"Insel",f_village:"Ort",f_about:"Über Sie",f_about_h:"Wer sind Sie, und warum sollten Gäste mit Ihnen kommen?",f_lang:"Sprachen",f_since:"Gastgeber seit",f_web:"Website oder Facebook (optional)",f_contact_note:"Telefon und E-Mail werden den Gästen zur Buchung angezeigt.",
+save_profile:"Profil speichern",create_profile:"Profil erstellen",cancel:"Abbrechen",saving:"Speichert…",
+f_new_act:"Neues Angebot",f_edit_act:"Angebot bearbeiten",f_title:"Titel",f_cat:"Kategorie",f_meet:"Treffpunkt",f_price:"Preis pro Person (DKK)",f_max:"Max. Gäste",f_km:"Strecke (Wanderungen)",f_level:"Niveau",f_lvl_none:"Nicht relevant",f_months:"Saison (Monate)",f_desc:"Beschreibung",f_inc:"Inklusive",f_inc_h:"Ein Punkt pro Zeile",publish_act:"Angebot veröffentlichen",save_changes:"Änderungen speichern",
+sl_h:"Freie Tage und Uhrzeiten",sl_p:"Gäste sehen diese im Kalender. Plätze bei Buchungen verringern, bei 0 ausgebucht.",sl_one:"Ein Datum",sl_weekly:"Wöchentlich",sl_date:"Datum",sl_time:"Uhrzeit",sl_spots:"Plätze",sl_day:"Wochentag",sl_weeks:"Für",sl_wk:"{n} Wochen",sl_add:"Hinzufügen",sl_none:"Noch keine freien Termine.",sl_count:"{n} kommende Termine",
+m_saved_p:"Profil gespeichert.",m_created:"Profil erstellt. Fügen Sie jetzt Ihr erstes Angebot hinzu.",m_act_saved:"Änderungen gespeichert.",m_act_pub:"Angebot veröffentlicht.",m_deleted:"Angebot gelöscht.",m_hidden:"Ihre Angebote sind ausgeblendet.",m_shown:"Ihre Angebote sind wieder sichtbar.",m_name:"Bitte zuerst einen Namen eingeben.",m_title:"Bitte einen Titel eingeben.",m_perm:"Keine Berechtigung zum Veröffentlichen. Bitten Sie den Seitenbesitzer um Mitwirkenden-Zugriff.",m_quota:"Die Plattform ist voll. Wenden Sie sich an den Seitenbesitzer.",m_fail:"Speichern fehlgeschlagen. Verbindung prüfen und erneut versuchen.",
+cat_hike:"Wandern",cat_hike_d:"Klippen, Gipfel & Leuchttürme",cat_boat:"Bootstouren",cat_boat_d:"Vogelfelsen, Angeln & Felsnadeln",cat_food:"Essen bei Einheimischen",cat_food_d:"Heimablídni zu Hause",cat_rent:"Verleih",cat_rent_d:"Kajaks, Räder & Ausrüstung",cat_culture:"Kultur & Hof",cat_culture_d:"Dörfer, Höfe & Geschichte",
+role_guide:"Bergführer",role_fisher:"Fischer / Skipper",role_farmer:"Bauer",role_home:"Gastgeber zu Hause",role_rental:"Verleih",role_other:"Einheimischer Gastgeber",
+lv_Easy:"Leicht",lv_Moderate:"Mittel",lv_Demanding:"Anspruchsvoll",lang_note:"Angebote erscheinen in der Sprache, in der der Gastgeber sie geschrieben hat."},
+es:{nav_explore:"Explorar",nav_hosts:"Anfitriones locales",nav_dash:"Para anfitriones",
+hero_eyebrow:"Føroyar · 62°N 7°O · 18 islas",hero_h1:"Todas las formas de <em>vivir</em> las Islas Feroe.",hero_p:"Haz senderismo con guías, pesca con pescadores, cena en una granja familiar o alquila un kayak. Cada actividad la ofrece un anfitrión feroés, con fechas disponibles al día.",search_ph:"Frailecillos, Mykines, kayak, cena…",
+st_exp:"experiencias",st_hosts:"anfitriones",st_isl:"islas",feat_eyebrow:"Lo mejor de la temporada",feat_h:"No te vayas sin hacer esto",all_exp:"Todas las experiencias",found:"encontradas",loading:"cargando…",
+all_isl:"Todas las islas",any_month:"Cualquier mes",sort_new:"Más recientes",sort_low:"Precio: de menor a mayor",sort_high:"Precio: de mayor a menor",saved:"♥ Guardadas",
+isl_eyebrow:"Por isla",isl_h:"¿Dónde te alojas?",isl_none:"Las islas aparecen aquí cuando los anfitriones añaden actividades.",tips_eyebrow:"Antes de ir",tips_h:"Conviene saber",
+tip1h:"El tiempo cambia rápido",tip1p:"La niebla puede cerrar una ruta de montaña en una hora. Consulta carreteras y viento en landsverk.fo y lleva siempre ropa impermeable.",tip2h:"Tasas de senderismo",tip2p:"Muchos senderos cruzan tierras privadas y los granjeros cobran una pequeña tasa. No salgas del camino, respeta las ovejas y cierra las puertas.",tip3h:"¿Qué es heimablídni?",tip3p:"Hospitalidad feroesa en casa. Prueba skerpikjøt, pescado ræst y cordero local en la mesa de una familia. Hay pocas plazas, reserva con antelación.",tip4h:"Ferris y helicópteros",tip4p:"Strandfaraskip Landsins conecta Mykines y las islas pequeñas. Con mar agitado se cancelan salidas, así que deja un día de reserva.",
+band_eyebrow:"Para anfitriones locales",band_h:"¿Guía, pescador, granjero o anfitrión?",band_p:"Crea tu perfil, publica tus actividades y abre las fechas en que estás libre. Los huéspedes te contactan directamente, sin comisión.",band_btn:"Crear tu perfil de anfitrión",
+hosts_eyebrow:"Las personas detrás de cada salida",hosts_p:"Cada experiencia la ofrece alguien que vive en las islas. Conócelos y mira lo que ofrecen.",all_hosts:"Todos",
+dash_eyebrow:"Panel de anfitrión",footer1:"Explore FO reúne experiencias en las Islas Feroe. La reserva y el pago se hacen directamente con cada anfitrión.",footer2:"Las actividades marcadas como \"Ejemplo\" son muestras.",
+example:"Ejemplo",example_listing:"Actividad de ejemplo",example_host:"Anfitrión de ejemplo",dkk_pp:"DKK / persona",free:"Gratis",next:"Próxima",no_dates:"Consultar fechas",season_from:"Temporada desde {m}",
+e_load_h:"Cargando experiencias…",e_sign_h:"Inicia sesión para ver las actividades",e_sign_p:"Las actividades se guardan en Claude. Abre esta página con sesión iniciada en claude.ai.",e_none_h:"Aún no hay experiencias",e_none_p:"Los anfitriones añaden sus actividades desde su panel.",be_first:"Sé el primer anfitrión",nomatch_h:"Sin resultados",nomatch_saved:"Toca el corazón de una tarjeta para guardarla.",nomatch_p:"Prueba otra isla, mes o fecha.",
+duration:"Duración",distance:"Distancia",level:"Nivel",group:"Grupo",upto:"Hasta {n}",per_person:"Por persona",when_runs:"Temporada",included:"Incluye",your_host:"Tu anfitrión",view_host:"Ver perfil del anfitrión",weather_note:"Las salidas pueden cancelarse por mal tiempo. Acuerda precio y condiciones de cancelación con el anfitrión.",
+contact:"Contacto",activities:"Actividades",no_acts:"Aún no hay actividades.",speaks:"Habla {x}",since:"Anfitrión desde {x}",no_contact:"Este anfitrión aún no ha añadido datos de contacto.",copy:"Copiar",copied:"Copiado",selected:"Seleccionado — cópialo",phone:"Teléfono",email:"Correo",website:"Web",
+cal_h:"Elige una fecha",cal_free:"Disponible",cal_full:"Completo",cal_today:"Hoy",cal_pick:"Toca una fecha verde para ver los horarios.",cal_none_month:"No hay fechas libres este mes. Prueba el siguiente.",cal_none:"El anfitrión aún no ha abierto fechas. Contáctale para preguntar.",spots:"Quedan {n} plazas",spot1:"Queda 1 plaza",full:"Completo",
+req_h:"Solicitar {t}",req_p:"Envía este mensaje al anfitrión por SMS, teléfono o correo. Te confirmará la reserva.",req_guests:"Personas",copy_msg:"Copiar mensaje",
+lb_loading:"Cargando anfitriones…",lb_sign_h:"Inicia sesión para ver los anfitriones",lb_sign_p:"Abre esta página con sesión iniciada en claude.ai.",lb_none:"Aún no hay anfitriones en este grupo",acts_n:"{n} actividades",acts_1:"1 actividad",
+d_connect:"Conectando…",d_sign_h:"Inicia sesión para ser anfitrión",d_sign_p:"Los perfiles se guardan con tu cuenta de claude.ai. Abre esta página con sesión iniciada.",d_noperm_h:"Solo puedes ver",d_noperm_p:"Para crear un perfil necesitas acceso de Colaborador. Pídeselo a quien compartió la página.",
+d_hi:"Hola, {x}",d_new:"Crea tu perfil de anfitrión",d_sub_new:"Cuenta a los huéspedes quién eres. Son dos minutos.",d_sub:"Gestiona tu perfil, actividades y fechas libres. Los cambios se publican al guardar.",
+d_how:"Cómo funciona",d_s1:"Crea tu perfil con una breve historia sobre ti.",d_s2:"Añade cada actividad: una ruta, una salida de pesca, una cena, un alquiler.",d_s3:"Abre las fechas y horas en que estás libre. Se ven en un calendario.",d_s4:"Los huéspedes te contactan para reservar. Sin comisión.",
+d_myacts:"Tus actividades",d_add:"+ Añadir actividad",d_noacts_h:"Aún no hay actividades",d_noacts_p:"Añade la primera para que te encuentren.",edit:"Editar",del:"Eliminar",confirm_del:"Confirmar",open_dates:"{n} horarios libres",
+location:"Lugar",languages:"Idiomas",listed:"Estado",visible:"Visible",hidden:"Oculto",edit_profile:"Editar perfil",preview:"Ver como huésped",hide_l:"Ocultar mis actividades",show_l:"Mostrar mis actividades",
+f_profile:"Tu perfil de anfitrión",f_edit_profile:"Editar perfil",f_name:"Nombre o nombre comercial",f_kind:"¿Qué tipo de anfitrión eres?",f_island:"Isla",f_village:"Pueblo",f_about:"Sobre ti",f_about_h:"¿Quién eres y por qué ir contigo?",f_lang:"Idiomas",f_since:"Anfitrión desde",f_web:"Web o Facebook (opcional)",f_contact_note:"Tu teléfono y correo se muestran para que te reserven.",
+save_profile:"Guardar perfil",create_profile:"Crear perfil",cancel:"Cancelar",saving:"Guardando…",
+f_new_act:"Nueva actividad",f_edit_act:"Editar actividad",f_title:"Título",f_cat:"Categoría",f_meet:"Punto de encuentro",f_price:"Precio por persona (DKK)",f_max:"Máx. personas",f_km:"Distancia (rutas)",f_level:"Nivel",f_lvl_none:"No aplica",f_months:"Temporada (meses)",f_desc:"Descripción",f_inc:"Incluye",f_inc_h:"Un elemento por línea",publish_act:"Publicar actividad",save_changes:"Guardar cambios",
+sl_h:"Fechas y horas libres",sl_p:"Se ven en un calendario. Baja las plazas al recibir reservas; 0 significa completo.",sl_one:"Una fecha",sl_weekly:"Semanal",sl_date:"Fecha",sl_time:"Hora",sl_spots:"Plazas",sl_day:"Día",sl_weeks:"Durante",sl_wk:"{n} semanas",sl_add:"Añadir",sl_none:"Aún no hay horarios libres.",sl_count:"{n} próximos horarios",
+m_saved_p:"Perfil guardado.",m_created:"Perfil creado. Ahora añade tu primera actividad.",m_act_saved:"Cambios guardados.",m_act_pub:"Actividad publicada.",m_deleted:"Actividad eliminada.",m_hidden:"Tus actividades están ocultas.",m_shown:"Tus actividades vuelven a ser visibles.",m_name:"Añade tu nombre primero.",m_title:"Pon un título a la actividad.",m_perm:"No tienes permiso para publicar. Pide acceso de Colaborador al propietario.",m_quota:"La plataforma está llena. Contacta con el propietario.",m_fail:"No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.",
+cat_hike:"Senderismo",cat_hike_d:"Acantilados, cumbres y faros",cat_boat:"Paseos en barco",cat_boat_d:"Aves, pesca y farallones",cat_food:"Cenas en casa",cat_food_d:"Heimablídni con locales",cat_rent:"Alquileres",cat_rent_d:"Kayaks, bicis y equipo",cat_culture:"Cultura y granja",cat_culture_d:"Pueblos, granjas e historia",
+role_guide:"Guía de montaña",role_fisher:"Pescador / patrón",role_farmer:"Granjero",role_home:"Anfitrión en casa",role_rental:"Alquileres",role_other:"Anfitrión local",
+lv_Easy:"Fácil",lv_Moderate:"Moderado",lv_Demanding:"Exigente",lang_note:"Las actividades se muestran en el idioma en que las escribió el anfitrión."}
+};
+Object.assign(TX.en,{nav_trips:"My trips",trips_eyebrow:"Your bookings",trips_p:"Your booking requests, their status and payment.",trips_none:"No bookings yet. Pick a date on any experience to book.",trips_sign:"Sign in to claude.ai to book and see your trips.",
+bk_h:"Book {t}",bk_name:"Your name",bk_contact:"Phone or email",bk_note:"Message to the host (optional)",bk_total:"Total",bk_btn:"Request booking",bk_sending:"Sending…",bk_done:"Booking requested",bk_done_p:"The host will confirm. You can pay now or later from My trips.",bk_signin:"Sign in to claude.ai to book.",bk_err:"Couldn't send the booking. Try again.",bk_need:"Add your name and a phone number or email.",bk_example:"This is an example host, so the booking is only a demo.",bk_view:"See my trips",
+st_pending:"Waiting for host",st_confirmed:"Confirmed",st_paid:"Paid",st_declined:"Declined",pay_h:"Payment",pay_btn:"Pay {x} DKK online",pay_none:"This host takes payment on arrival or as you agree.",pay_claim:"I've paid",pay_claimed:"You marked this as paid. The host will confirm it.",pay_note:"You pay on the host's own payment page. Explore FO never sees your card details.",cancel_bk:"Cancel booking",confirm_cancel:"Yes, cancel",guests_n:"{n} guests",guest_1:"1 guest",
+d_bookings:"Bookings",d_nobk:"No bookings yet. They appear here when guests book.",confirm:"Confirm",decline:"Decline",mark_paid:"Mark paid",guest_paid:"Guest says paid",
+f_pay_h:"Payments",f_paylink:"Payment link",f_paylink_h:"A Stripe, SumUp or PayPal payment link. Guests are sent here to pay.",f_mp:"MobilePay number",
+photos:"Photos",ph_add:"+ Add photos",ph_h:"Show guests the place. Up to 6 photos; the first one is the cover.",ph_up:"Uploading…",ph_off:"Photo upload isn't available for your account on this page.",ph_err:"Couldn't upload that photo. Try a JPG or PNG under 20 MB.",ph_cover:"Cover",bb_persons:"persons",bb_pay:"Pay with",pm_card:"Card online",pm_arrival:"Pay on arrival",pm_test:"Card (test)",bb_cta:"Choose date & time",bb_cta_ready:"Book & pay",bk_btn_pay:"Book and pay {x} DKK",pay_demo:"Pay {x} DKK (test)",pay_demo_p:"This is an example host, so this is a test payment. No money is charged.",sl_cal:"Calendar",sl_cal_p:"Tap the days you're free. Each day gets the time and spots set above the calendar. Tap a green day again to remove it."});
+Object.assign(TX.de,{nav_trips:"Meine Reisen",trips_eyebrow:"Ihre Buchungen",trips_p:"Ihre Buchungsanfragen, ihr Status und die Bezahlung.",trips_none:"Noch keine Buchungen. Wählen Sie bei einem Erlebnis ein Datum.",trips_sign:"Melden Sie sich bei claude.ai an, um zu buchen.",
+bk_h:"{t} buchen",bk_name:"Ihr Name",bk_contact:"Telefon oder E-Mail",bk_note:"Nachricht an den Gastgeber (optional)",bk_total:"Gesamt",bk_btn:"Buchung anfragen",bk_sending:"Wird gesendet…",bk_done:"Buchung angefragt",bk_done_p:"Der Gastgeber bestätigt. Sie können jetzt oder später unter Meine Reisen bezahlen.",bk_signin:"Zum Buchen bei claude.ai anmelden.",bk_err:"Buchung konnte nicht gesendet werden. Bitte erneut versuchen.",bk_need:"Bitte Name und Telefon oder E-Mail angeben.",bk_example:"Dies ist ein Beispiel-Gastgeber, die Buchung ist nur eine Demo.",bk_view:"Meine Reisen ansehen",
+st_pending:"Wartet auf Gastgeber",st_confirmed:"Bestätigt",st_paid:"Bezahlt",st_declined:"Abgelehnt",pay_h:"Bezahlung",pay_btn:"{x} DKK online bezahlen",pay_none:"Dieser Gastgeber kassiert vor Ort oder nach Absprache.",pay_claim:"Ich habe bezahlt",pay_claimed:"Als bezahlt markiert. Der Gastgeber bestätigt die Zahlung.",pay_note:"Sie bezahlen auf der Zahlungsseite des Gastgebers. Explore FO sieht Ihre Kartendaten nie.",cancel_bk:"Buchung stornieren",confirm_cancel:"Ja, stornieren",guests_n:"{n} Gäste",guest_1:"1 Gast",
+d_bookings:"Buchungen",d_nobk:"Noch keine Buchungen.",confirm:"Bestätigen",decline:"Ablehnen",mark_paid:"Als bezahlt markieren",guest_paid:"Gast sagt: bezahlt",
+f_pay_h:"Zahlungen",f_paylink:"Zahlungslink",f_paylink_h:"Ein Stripe-, SumUp- oder PayPal-Link. Gäste werden dorthin geschickt.",f_mp:"MobilePay-Nummer",
+photos:"Fotos",ph_add:"+ Fotos hinzufügen",ph_h:"Zeigen Sie den Ort. Bis zu 6 Fotos, das erste ist das Titelbild.",ph_up:"Wird hochgeladen…",ph_off:"Foto-Upload ist für Ihr Konto hier nicht verfügbar.",ph_err:"Foto konnte nicht hochgeladen werden. JPG oder PNG unter 20 MB versuchen.",ph_cover:"Titelbild",bb_persons:"Personen",bb_pay:"Bezahlen mit",pm_card:"Karte online",pm_arrival:"Zahlung vor Ort",pm_test:"Karte (Test)",bb_cta:"Datum & Uhrzeit wählen",bb_cta_ready:"Buchen & bezahlen",bk_btn_pay:"Buchen und {x} DKK bezahlen",pay_demo:"{x} DKK bezahlen (Test)",pay_demo_p:"Beispiel-Gastgeber: Das ist eine Testzahlung. Es wird kein Geld abgebucht.",sl_cal:"Kalender",sl_cal_p:"Tippen Sie auf die Tage, an denen Sie frei sind. Jeder Tag bekommt die Uhrzeit und Plätze darüber. Erneut tippen entfernt den Tag."});
+Object.assign(TX.es,{nav_trips:"Mis viajes",trips_eyebrow:"Tus reservas",trips_p:"Tus solicitudes de reserva, su estado y el pago.",trips_none:"Aún no tienes reservas. Elige una fecha en cualquier experiencia.",trips_sign:"Inicia sesión en claude.ai para reservar.",
+bk_h:"Reservar {t}",bk_name:"Tu nombre",bk_contact:"Teléfono o correo",bk_note:"Mensaje al anfitrión (opcional)",bk_total:"Total",bk_btn:"Solicitar reserva",bk_sending:"Enviando…",bk_done:"Reserva solicitada",bk_done_p:"El anfitrión la confirmará. Puedes pagar ahora o más tarde desde Mis viajes.",bk_signin:"Inicia sesión en claude.ai para reservar.",bk_err:"No se pudo enviar la reserva. Inténtalo de nuevo.",bk_need:"Añade tu nombre y un teléfono o correo.",bk_example:"Es un anfitrión de ejemplo, la reserva es solo una demostración.",bk_view:"Ver mis viajes",
+st_pending:"Esperando al anfitrión",st_confirmed:"Confirmada",st_paid:"Pagada",st_declined:"Rechazada",pay_h:"Pago",pay_btn:"Pagar {x} DKK en línea",pay_none:"Este anfitrión cobra a la llegada o según acordéis.",pay_claim:"Ya he pagado",pay_claimed:"Marcada como pagada. El anfitrión lo confirmará.",pay_note:"Pagas en la página de pago del propio anfitrión. Explore FO nunca ve los datos de tu tarjeta.",cancel_bk:"Cancelar reserva",confirm_cancel:"Sí, cancelar",guests_n:"{n} personas",guest_1:"1 persona",
+d_bookings:"Reservas",d_nobk:"Aún no hay reservas.",confirm:"Confirmar",decline:"Rechazar",mark_paid:"Marcar pagada",guest_paid:"El huésped dice que pagó",
+f_pay_h:"Pagos",f_paylink:"Enlace de pago",f_paylink_h:"Un enlace de pago de Stripe, SumUp o PayPal. Los huéspedes pagan allí.",f_mp:"Número de MobilePay",
+photos:"Fotos",ph_add:"+ Añadir fotos",ph_h:"Enseña el lugar. Hasta 6 fotos; la primera es la portada.",ph_up:"Subiendo…",ph_off:"La subida de fotos no está disponible para tu cuenta aquí.",ph_err:"No se pudo subir la foto. Prueba un JPG o PNG de menos de 20 MB.",ph_cover:"Portada",bb_persons:"personas",bb_pay:"Pagar con",pm_card:"Tarjeta en línea",pm_arrival:"Pago a la llegada",pm_test:"Tarjeta (prueba)",bb_cta:"Elegir fecha y hora",bb_cta_ready:"Reservar y pagar",bk_btn_pay:"Reservar y pagar {x} DKK",pay_demo:"Pagar {x} DKK (prueba)",pay_demo_p:"Anfitrión de ejemplo: es un pago de prueba. No se cobra dinero.",sl_cal:"Calendario",sl_cal_p:"Toca los días en que estás libre. Cada día recibe la hora y plazas de arriba. Toca de nuevo un día verde para quitarlo."});
+let LANG="en";try{const s=localStorage.getItem("efo-lang");if(TX[s])LANG=s;else{const n=(navigator.language||"").slice(0,2);if(TX[n])LANG=n}}catch(e){}
+const LOC={en:"en-GB",de:"de-DE",es:"es-ES"};
+const t=(k,v)=>{let s=(TX[LANG][k]??TX.en[k]??k);if(v)for(const x in v)s=s.replace("{"+x+"}",v[x]);return s};
+const mName=(i,f="short")=>new Intl.DateTimeFormat(LOC[LANG],{month:f}).format(new Date(2026,i,1));
+const fmtDate=(iso,o={weekday:"short",day:"numeric",month:"short"})=>new Intl.DateTimeFormat(LOC[LANG],o).format(new Date(iso+"T12:00:00"));
+const wdNames=()=>[...Array(7)].map((_,i)=>new Intl.DateTimeFormat(LOC[LANG],{weekday:"short"}).format(new Date(2026,0,5+i)));
+
+/* ================= data constants ================= */
+const ICON={hike:'<path d="M4 20h16M7 20l4-9 3 5 2-3 4 7"/><circle cx="15" cy="5" r="2"/>',boat:'<path d="M3 16h18l-2 4H5zM12 4v12M12 5l6 9h-6"/><path d="M2 21c2 0 2-1 4-1s2 1 4 1 2-1 4-1 2 1 4 1 2-1 4-1"/>',food:'<path d="M4 3v8a3 3 0 0 0 6 0V3M7 3v18M16 3c-2 0-3 3-3 7h3v11"/>',rent:'<path d="M3 15c3-2 15-2 18 0-3 2-15 2-18 0zM9 12l2-6 2 6M2 20h20"/>',culture:'<path d="M3 21h18M5 21V11l7-6 7 6v10M10 21v-5h4v5M12 2v3"/>'};
+const CATS={hike:{c:"#2f6b4a",sky:["#9fc3b0","#d9e8df"]},boat:{c:"#1d5a78",sky:["#8fb6c9","#dbe9f0"]},food:{c:"#b8742a",sky:["#e3b47a","#f7e3c8"]},rent:{c:"#5b4d8c",sky:["#b2a6d4","#e7e2f4"]},culture:{c:"#9a4532",sky:["#d6a08f","#f3ddd5"]}};
+const ROLES={guide:"#2f6b4a",fisher:"#1d5a78",farmer:"#9a4532",home:"#b8742a",rental:"#5b4d8c",other:"#4a5c57"};
+const ISLANDS=["Streymoy","Vágar","Eysturoy","Mykines","Suðuroy","Sandoy","Kalsoy","Borðoy","Nólsoy","Viðoy","Skúvoy","Hestur"];
+const catN=k=>t("cat_"+(CATS[k]?k:"hike"));const roleN=k=>t("role_"+(ROLES[k]?k:"other"));const roleC=k=>ROLES[k]||ROLES.other;
+const lvN=l=>l?t("lv_"+l):"";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const kr=n=>Number(n||0).toLocaleString(LOC[LANG]);
+const svgIcon=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[k]||ICON.hike}</svg>`;
+const hashStr=s=>{let h=7;for(const c of String(s))h=(h*31+c.charCodeAt(0))%233280;return h};
+const initials=n=>(String(n||"?").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("")||"?").toUpperCase();
+const pad=n=>String(n).padStart(2,"0");
+const isoOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const TODAY=isoOf(new Date());
+
+/* ================= state ================= */
+let db=null,user=null,uid=null,canWrite=null,dbState="loading",assets=null;
+let hosts=new Map(),bkDocs=new Map();
+const ui={view:"explore",q:"",cat:"all",isl:"all",mo:"all",date:"",sort:"new",saved:false,role:"all"};
+let saved=new Set();try{saved=new Set(JSON.parse(localStorage.getItem("upp-saved2")||"[]"))}catch(e){}
+const dash={draftPhotos:null,phBusy:false,phErr:"",mode:"view",editId:null,saving:false,msg:"",msgType:"",armed:null,draftMonths:null,draftRole:null,draftSlots:null,slotMode:"cal",slotCal:null,slotTime:null,slotSpots:null,dirty:false};
+const cal={key:null,y:0,m:0,sel:null,time:null,guests:2,name:"",contact:"",note:"",busy:false,err:"",done:null};
+let tripArmed=null;
+
+const upcoming=a=>(a.slots||[]).filter(s=>s.d>=TODAY).sort((x,y)=>(x.d+x.h).localeCompare(y.d+y.h));
+const allBk=()=>{const o=[];for(const [,d] of bkDocs)(d.items||[]).forEach(i=>o.push(i));return o};
+const bkStatus=i=>((hosts.get(i.host)||{}).bookingStatus||{})[i.id]||(i.demoPaid?"paid":"pending");
+function left(a,s){const used=allBk().filter(i=>i.host===a.hostId&&i.act===a.id&&i.d===s.d&&i.h===s.h&&bkStatus(i)!=="declined").reduce((n,i)=>n+(+i.guests||0),0);return Math.max(0,(+s.n||0)-used)}
+const nextFree=a=>upcoming(a).find(s=>left(a,s)>0);
+const myBk=()=>(uid&&bkDocs.get(uid)?.items)||[];
+const okId=id=>/^[A-Za-z0-9_-]{8,64}$/.test(String(id||""));
+function artHTML(a,id){const p=(a.photos||[]).find(okId);return scene(a,id)+(p?`<img src="/_blob/${p}" alt="${esc(a.t)}" loading="lazy" onerror="this.remove()">`:"")}
+function safeUrl(u){u=String(u||"").trim();if(!u)return "";if(!/^https?:\/\//i.test(u))u="https://"+u;try{const x=new URL(u);return x.protocol==="https:"||x.protocol==="http:"?x.href:""}catch(e){return ""}}
+function allActs(){const out=[];for(const [hid,h] of hosts){if(h.published===false)continue;(h.activities||[]).forEach(a=>out.push({...a,hostId:hid,host:h,key:hid+"::"+a.id}))}return out}
+function seasonText(mo){if(!mo||!mo.length)return "–";if(mo.length===12)return mName(0,"short")+"–"+mName(11,"short");return mName(mo[0])+"–"+mName(mo[mo.length-1])}
+function nextLabel(a){const n=nextFree(a);if(n)return `<span class="next">${t("next")}: ${esc(fmtDate(n.d))} · ${esc(n.h)}</span>`;
+ const m=new Date().getMonth();if(a.mo&&a.mo.length&&!a.mo.includes(m)){const nm=a.mo.find(x=>x>m)??a.mo[0];return `<span class="next off">${t("season_from",{m:mName(nm,"long")})}</span>`}
+ return `<span class="next off">${t("no_dates")}</span>`}
+
+/* ================= illustration ================= */
+function scene(a,uid2){const C=CATS[a.cat]||CATS.hike;let s=hashStr(a.key||a.id||a.t)+11;const r=()=>(s=(s*9301+49297)%233280)/233280;
+ const ridge=(base,amp,step)=>{let p=`M0 ${base} `,X=0;while(X<400){X+=step*(.6+r()*.8);p+=`L${Math.min(X,400).toFixed(0)} ${(base-amp*(.3+r()*.7)).toFixed(0)} `}return p+`L400 ${base+40} L0 ${base+40}Z`};
+ const sun=60+r()*280;let motif="";
+ if(a.cat==="boat"){const bx=120+r()*160;motif=`<path d="M${bx} 186 h46 l-6 8 h-34z" fill="#1b2a2a"/><path d="M${bx+20} 186 v-22 l14 18z" fill="#f4f1ea"/>`}
+ if(a.cat==="hike"){const hx=60+r()*260;motif=`<path d="M${hx} 120 l0 -16" stroke="#1b2a2a" stroke-width="2"/><path d="M${hx} 104 l12 4 l-12 4z" fill="#c98a34"/>`}
+ if(a.cat==="food"){motif=`<path d="M250 165 l26 -20 l26 20 v24 h-52z" fill="#3d2a1c"/><path d="M246 166 l30 -24 l30 24 l-6 2 l-24 -19 l-24 19z" fill="#4c7a3f"/><rect x="270" y="174" width="10" height="15" fill="#f2c46b"/>`}
+ if(a.cat==="rent"){const kx=90+r()*200;motif=`<path d="M${kx} 192 q30 -6 60 0 q-30 6 -60 0z" fill="#d1553e"/><path d="M${kx+18} 182 l24 18" stroke="#1b2a2a" stroke-width="2"/>`}
+ if(a.cat==="culture"){motif=`<path d="M110 168 h46 v22 h-46z" fill="#f4f1ea"/><path d="M106 170 l27 -16 l27 16z" fill="#4c7a3f"/><path d="M146 168 v-20 h8 v20" fill="#f4f1ea"/><path d="M145 149 l5 -7 l5 7z" fill="#1b2a2a"/>`}
+ const gid="g"+String(uid2).replace(/[^a-zA-Z0-9]/g,"");
+ return `<svg viewBox="0 0 400 225" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.sky[0]}"/><stop offset="1" stop-color="${C.sky[1]}"/></linearGradient></defs><rect width="400" height="225" fill="url(#${gid})"/><circle cx="${sun.toFixed(0)}" cy="${(48+r()*30).toFixed(0)}" r="22" fill="#fff6e3" opacity=".85"/><path d="${ridge(140,70,40)}" fill="${C.c}" opacity=".35"/><path d="${ridge(165,60,50)}" fill="${C.c}" opacity=".6"/><path d="${ridge(190,46,60)}" fill="${C.c}"/><rect y="182" width="400" height="43" fill="#1d4a52" opacity=".85"/><path d="M0 194 q50 -4 100 0 t100 0 t100 0 t100 0" stroke="#fff" stroke-opacity=".25" fill="none"/>${motif}</svg>`}
+const avatar=(h,lg)=>`<span class="av${lg?" lg":""}" style="background:${roleC(h.role)}" aria-hidden="true">${esc(initials(h.name))}</span>`;
+
+/* ================= static text ================= */
+function applyStatic(){document.documentElement.lang=LANG;
+ document.querySelectorAll("[data-i]").forEach(el=>el.textContent=t(el.dataset.i));
+ document.querySelectorAll("[data-iph]").forEach(el=>el.placeholder=t(el.dataset.iph));
+ $("#hero-h1").innerHTML=t("hero_h1");
+ $("#tiles").innerHTML=Object.keys(CATS).map(k=>`<button class="tile" data-c="${k}" aria-pressed="${ui.cat===k}"><span class="ic" style="background:${CATS[k].c}1f;color:${CATS[k].c}">${svgIcon(k)}</span><b>${t("cat_"+k)}</b><span>${t("cat_"+k+"_d")}</span></button>`).join("");
+ $("#band-roles").innerHTML=["guide","fisher","farmer","home","rental"].map(r=>`<span>${esc(roleN(r))}</span>`).join("");
+ $("#island").innerHTML=`<option value="all">${t("all_isl")}</option>`+ISLANDS.map(i=>`<option ${ui.isl===i?"selected":""}>${esc(i)}</option>`).join("");
+ $("#month").innerHTML=`<option value="all">${t("any_month")}</option>`+[...Array(12).keys()].map(i=>`<option value="${i}" ${String(ui.mo)===String(i)?"selected":""}>${esc(mName(i,"long"))}</option>`).join("");
+ $("#sort").innerHTML=["new","low","high"].map(k=>`<option value="${k}" ${ui.sort===k?"selected":""}>${t("sort_"+k)}</option>`).join("");
+ $("#saved").textContent=t("saved");$("#date").min=TODAY;
+ $("#tips").innerHTML=[1,2,3,4].map(i=>`<div class="tip"><h3>${t("tip"+i+"h")}</h3><p>${t("tip"+i+"p")}</p></div>`).join("");
+ $("#lang").value=LANG}
+
+/* ================= explore ================= */
+function renderExplore(){
+ const acts=allActs();
+ $("#stats").innerHTML=`<span><b>${acts.length}</b>${t("st_exp")}</span><span><b>${[...hosts.values()].filter(h=>h.published!==false).length}</b>${t("st_hosts")}</span><span><b>${new Set(acts.map(a=>a.isl)).size}</b>${t("st_isl")}</span>`;
+ $("#islands").innerHTML=ISLANDS.map(k=>{const n=acts.filter(a=>a.isl===k).length;return n?`<button class="isl" data-i2="${esc(k)}"><span><b>${esc(k)}</b><small>${acts.filter(a=>a.isl===k).map(a=>catN(a.cat)).filter((v,i,s)=>s.indexOf(v)===i).slice(0,2).join(" · ")}</small></span><span class="n">${n}</span></button>`:""}).join("")||`<p class="muted">${t("isl_none")}</p>`;
+ const f=acts.find(a=>a.feat&&(nextFree(a)||(a.mo||[]).length))||acts.filter(a=>nextFree(a)).sort((x,y)=>(!!x.host.example-!!y.host.example)||((y.host.updatedAt||0)-(x.host.updatedAt||0)))[0];
+ const f2=(f&&!nextFree(f)&&acts.find(a=>nextFree(a)&&a.host.example))||f;
+ $("#feat-sec").hidden=!f2;
+ if(f2)$("#feature").innerHTML=`<div class="art">${artHTML(f2,"feat")}</div><div class="txt"><span class="where">${esc(f2.place)}, ${esc(f2.isl)}</span><h3>${esc(f2.t)}</h3><p>${esc(f2.d)}</p><div class="pills">${f2.dur?`<span class="pill">${esc(f2.dur)}</span>`:""}${f2.km?`<span class="pill">${esc(f2.km)}</span>`:""}<span class="pill">${kr(f2.price)} DKK</span>${f2.host.example?`<span class="pill ex">${t("example")}</span>`:""}</div>${nextLabel(f2)}<div class="byline">${avatar(f2.host)}<span>${esc(f2.host.name)} · ${esc(roleN(f2.host.role))}</span></div><button class="btn" data-open="${esc(f2.key)}">${t("cal_h")} →</button></div>`;
+ let list=acts.filter(a=>(ui.cat==="all"||a.cat===ui.cat)&&(ui.isl==="all"||a.isl===ui.isl)&&(ui.mo==="all"||(a.mo||[]).includes(+ui.mo))&&(!ui.date||(a.slots||[]).some(s=>s.d===ui.date&&left(a,s)>0))&&(!ui.saved||saved.has(a.key))&&(!ui.q||[a.t,a.d,a.place,a.isl,a.host.name,catN(a.cat)].join(" ").toLowerCase().includes(ui.q)));
+ list.sort((x,y)=>ui.sort==="low"?x.price-y.price:ui.sort==="high"?y.price-x.price:(!nextFree(x)-!nextFree(y))||(!!x.host.example-!!y.host.example)||((y.host.updatedAt||0)-(x.host.updatedAt||0)));
+ $("#count").textContent=dbState==="loading"?t("loading"):`${list.length} ${t("found")}`;
+ let html;
+ if(dbState==="loading")html=`<div class="empty"><b>${t("e_load_h")}</b></div>`;
+ else if(dbState==="off")html=`<div class="empty"><b>${t("e_sign_h")}</b><span>${t("e_sign_p")}</span></div>`;
+ else if(!acts.length)html=`<div class="empty"><b>${t("e_none_h")}</b><span>${t("e_none_p")}</span><a class="btn moss" href="#dashboard">${t("be_first")}</a></div>`;
+ else if(!list.length)html=`<div class="empty"><b>${t("nomatch_h")}</b><span>${ui.saved?t("nomatch_saved"):t("nomatch_p")}</span></div>`;
+ else html=list.map(a=>{const C=CATS[a.cat]||CATS.hike;return `<article class="card"><button class="card-main" data-open="${esc(a.key)}" aria-label="${esc(a.t)}">
+  <div class="art">${artHTML(a,a.key)}<span class="badge" style="color:${C.c}">${svgIcon(a.cat)}${catN(a.cat)}</span></div>
+  <div class="card-body"><div class="where">${esc(a.place)}, ${esc(a.isl)}${a.host.example?` · <span class="pill ex">${t("example")}</span>`:""}</div><h3>${esc(a.t)}</h3><p>${esc(a.d)}</p>${nextLabel(a)}
+  <div class="byline">${avatar(a.host)}<span class="muted">${esc(a.host.name)} · ${esc(roleN(a.host.role))}</span></div></div>
+  <div class="meta"><span class="muted">${esc(a.dur||"")}${a.km?" · "+esc(a.km):""}</span><span class="price">${a.price?kr(a.price):t("free")} <small>${a.price?t("dkk_pp"):""}</small></span></div></button>
+  <button class="save" data-save="${esc(a.key)}" aria-pressed="${saved.has(a.key)}" aria-label="♥ ${esc(a.t)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button></article>`}).join("");
+ $("#grid").innerHTML=html;
+}
+
+/* ================= hosts ================= */
+function renderHosts(){
+ $("#rolebar").innerHTML=[["all",t("all_hosts")],...Object.keys(ROLES).map(k=>[k,roleN(k)])].map(([k,n])=>`<button data-role="${k}" aria-pressed="${ui.role===k}">${esc(n)}</button>`).join("");
+ if(dbState==="loading"){$("#hostgrid").innerHTML=`<div class="empty"><b>${t("lb_loading")}</b></div>`;return}
+ if(dbState==="off"){$("#hostgrid").innerHTML=`<div class="empty"><b>${t("lb_sign_h")}</b><span>${t("lb_sign_p")}</span></div>`;return}
+ const hs=[...hosts.entries()].filter(([,h])=>h.published!==false&&(ui.role==="all"||h.role===ui.role)).sort((a,b)=>(!!a[1].example-!!b[1].example)||((b[1].updatedAt||0)-(a[1].updatedAt||0)));
+ $("#hostgrid").innerHTML=hs.length?hs.map(([id,h])=>{const n=(h.activities||[]).length;return `<button class="host" data-host="${esc(id)}"><div class="host-top">${avatar(h,true)}<div><h3>${esc(h.name)}</h3><div class="role" style="color:${roleC(h.role)}">${esc(roleN(h.role))}</div><div class="where">${esc(h.village?h.village+", ":"")}${esc(h.island||"")}</div></div></div><p>${esc(h.bio||"")}</p><div class="pills"><span class="pill">${n===1?t("acts_1"):t("acts_n",{n})}</span>${h.languages?`<span class="pill">${esc(h.languages)}</span>`:""}${h.example?`<span class="pill ex">${t("example")}</span>`:""}</div></button>`}).join(""):`<div class="empty"><b>${t("lb_none")}</b><a class="btn moss" href="#dashboard">${t("band_btn")}</a></div>`;
+}
+
+/* ================= sheets + calendar ================= */
+function contactBlock(h){const rows=[["phone",h.phone],["email",h.email],["website",h.web]].filter(r=>r[1]);
+ if(!rows.length)return `<p class="note">${t("no_contact")}</p>`;
+ return `<div class="contact">${rows.map(([k,v])=>`<div><span>${esc(v)}</span><button class="btn ghost small" data-copy="${esc(v)}">${t("copy")} ${t(k).toLowerCase()}</button></div>`).join("")}</div>`}
+function calHTML(a){
+ const ups=upcoming(a);
+ if(!ups.length)return `<div class="cal"><b style="font-family:var(--display)">${t("cal_h")}</b><p class="note" style="margin:0">${t("cal_none")}</p></div>`;
+ const byDay={};ups.forEach(s=>(byDay[s.d]=byDay[s.d]||[]).push(s));
+ const y=cal.y,m=cal.m;const first=new Date(y,m,1);const lead=(first.getDay()+6)%7;const dim=new Date(y,m+1,0).getDate();
+ const now=new Date();const atStart=y===now.getFullYear()&&m===now.getMonth();
+ const last=ups[ups.length-1].d;const atEnd=`${y}-${pad(m+1)}`>=last.slice(0,7);
+ let cells=wdNames().map(w=>`<div class="wd">${esc(w)}</div>`).join("")+"<div></div>".repeat(lead);let any=false;
+ for(let d=1;d<=dim;d++){const iso=`${y}-${pad(m+1)}-${pad(d)}`;const sl=byDay[iso];const free=sl&&sl.some(s=>left(a,s)>0);if(free)any=true;
+  const cls=["day",free?"free":sl?"full":"",iso===TODAY?"today":"",cal.sel===iso?"sel":""].join(" ");
+  cells+=sl?`<button class="${cls}" data-day="${iso}" aria-label="${esc(fmtDate(iso,{weekday:"long",day:"numeric",month:"long"}))}">${d}</button>`:`<div class="${cls}">${d}</div>`}
+ let times="";
+ if(cal.sel&&byDay[cal.sel]&&!cal.done){times=`<div style="display:grid;gap:8px"><b style="font-size:.9rem;text-transform:capitalize">${esc(fmtDate(cal.sel,{weekday:"long",day:"numeric",month:"long"}))}</b><div class="times">${byDay[cal.sel].map(s=>`<button data-time="${esc(s.h)}" aria-pressed="${cal.time===s.h}" ${left(a,s)>0?"":"disabled"}><b>${esc(s.h)}</b><small>${left(a,s)>0?(left(a,s)===1?t("spot1"):t("spots",{n:left(a,s)})):t("full")}</small></button>`).join("")}</div></div>`;
+  const slot=byDay[cal.sel].find(s=>s.h===cal.time&&left(a,s)>0);
+  if(slot){const lf=left(a,slot);const g=Math.min(cal.guests,lf);const tot=g*(+a.price||0);
+   times+=`<div class="reqbox" id="bkbox"><b style="font-family:var(--display)">${t("bk_h",{t:`${esc(fmtDate(cal.sel))} · ${esc(slot.h)}`})}</b>
+   ${!db||!uid?`<span class="note" style="color:var(--fg)">${t("bk_signin")}</span>${contactBlock(a.host)}`:`
+   <div class="fm" style="grid-template-columns:1fr 1fr"><label>${t("req_guests")}<select id="guests">${[...Array(Math.min(lf,20)).keys()].map(i=>`<option ${i+1===g?"selected":""}>${i+1}</option>`).join("")}</select></label>
+   <label>${t("bk_total")}<span class="price" style="padding:8px 0">${kr(tot)} DKK</span></label>
+   <label>${t("bk_name")}<input id="bk-name" maxlength="60" value="${esc(cal.name)}" autocomplete="name"></label>
+   <label>${t("bk_contact")}<input id="bk-contact" maxlength="80" value="${esc(cal.contact)}" autocomplete="email"></label>
+   <label class="full">${t("bk_note")}<textarea id="bk-note" rows="2" maxlength="300">${esc(cal.note)}</textarea></label></div>
+   ${a.host.example?`<span class="note" style="color:var(--fg)">${t("bk_example")}</span>`:""}
+   <div class="formbar"><button class="btn moss" data-book ${cal.busy?"disabled":""}>${cal.busy?t("bk_sending"):tot?t("bk_btn_pay",{x:kr(tot)}):t("bk_btn")}</button>${cal.err?`<span class="msg err">${t(cal.err)}</span>`:""}</div>`}</div>`}}
+ else times=`<p class="note" style="margin:0">${any?t("cal_pick"):t("cal_none_month")}</p>`;
+ if(cal.done){const it=myBk().find(i=>i.id===cal.done);if(it)times=`<div class="reqbox"><b style="font-family:var(--display);font-size:1.15rem">✓ ${t("bk_done")}</b><span class="note" style="color:var(--fg)">${t("bk_done_p")}</span>${payBox(it)}<a class="btn ghost small" href="#trips" style="justify-self:start">${t("bk_view")}</a></div>`}
+ return `<div class="cal" id="cal"><div class="cal-head"><b>${esc(new Intl.DateTimeFormat(LOC[LANG],{month:"long",year:"numeric"}).format(first))}</b><div class="cal-nav"><button data-calnav="-1" ${atStart?"disabled":""} aria-label="‹">‹</button><button data-calnav="1" ${atEnd?"disabled":""} aria-label="›">›</button></div></div>
+ <div class="cal-grid">${cells}</div><div class="legend"><span><i style="background:var(--moss-soft);border:1px solid var(--moss)"></i>${t("cal_free")}</span><span><i style="background:var(--bg);border:1px solid var(--line)"></i>${t("cal_full")}</span><span><i style="border:1px solid var(--turf)"></i>${t("cal_today")}</span></div>${times}</div>`}
+function payBox(it){const h=hosts.get(it.host)||{};const st=bkStatus(it);if(st==="paid"||st==="declined")return "";const link=safeUrl(h.payLink);
+ return `<div style="display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px"><b style="font-size:.85rem">${t("pay_h")} · ${kr(it.total)} DKK</b>
+ ${link?`<a class="btn turf" href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="justify-self:start">${t("pay_btn",{x:kr(it.total)})} ↗</a>`:""}
+ ${h.mobilePay?`<div class="contact"><div><span>MobilePay ${esc(h.mobilePay)}</span><button class="btn ghost small" data-copy="${esc(h.mobilePay)}">${t("copy")}</button></div></div>`:""}
+ ${!link&&!h.mobilePay?(h.example?`<button class="btn turf" data-paid="${esc(it.id)}" data-demo="1" style="justify-self:start">${t("pay_demo",{x:kr(it.total)})}</button><span class="note">${t("pay_demo_p")}</span>`:`<span class="note">${t("pay_none")}</span>`):""}
+ ${link||h.mobilePay?(it.paidClaim?`<span class="note" style="color:var(--moss)">${t("pay_claimed")}</span>`:`<button class="btn ghost small" data-paid="${esc(it.id)}" style="justify-self:start">${t("pay_claim")}</button>`):""}
+ ${link?`<span class="note">${t("pay_note")}</span>`:""}</div>`}
+const stPill=st=>`<span class="pill" style="background:${st==="paid"||st==="confirmed"?"var(--moss-soft)":st==="declined"?"var(--bg)":"var(--turf-soft)"}">${t("st_"+st)}</span>`;
+async function saveMyBk(items){await db.doc("bookings/"+uid).set({items:items.slice(-60),updatedAt:Date.now()})}
+async function doBook(){const a=allActs().find(x=>x.key===cal.key);if(!a||cal.busy)return;
+ cal.name=$("#bk-name").value.trim();cal.contact=$("#bk-contact").value.trim();cal.note=$("#bk-note").value.trim();
+ if(!cal.name||!cal.contact){cal.err="bk_need";redrawCal();return}
+ const slot=(a.slots||[]).find(s=>s.d===cal.sel&&s.h===cal.time);if(!slot||left(a,slot)<1){cal.time=null;redrawCal();return}
+ const g=Math.min(cal.guests,left(a,slot));
+ const it={id:"b"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),host:a.hostId,act:a.id,title:a.t,cat:a.cat,isl:a.isl,place:a.place,d:slot.d,h:slot.h,guests:g,total:g*(+a.price||0),name:cal.name,contact:cal.contact,note:cal.note,createdAt:Date.now()};
+ cal.busy=true;cal.err="";redrawCal();
+ try{await saveMyBk([...myBk(),it]);cal.busy=false;cal.done=it.id;cal.note="";redrawCal()}catch(e){cal.busy=false;cal.err="bk_err";redrawCal()}}
+function renderTrips(){const el=$("#trips");
+ if(dbState==="loading"){el.innerHTML=`<div class="empty"><b>${t("loading")}</b></div>`;return}
+ if(dbState==="off"||!uid){el.innerHTML=`<div class="empty"><b>${t("trips_sign")}</b></div>`;return}
+ const items=[...myBk()].sort((x,y)=>(x.d+x.h).localeCompare(y.d+y.h));
+ if(!items.length){el.innerHTML=`<div class="empty"><b>${t("trips_none")}</b><a class="btn moss" href="#explore">${t("nav_explore")}</a></div>`;return}
+ el.innerHTML=`<div class="alist" style="padding-block:20px 0">${items.map(i=>{const h=hosts.get(i.host)||{};const a=(h.activities||[]).find(x=>x.id===i.act)||{t:i.title,cat:i.cat,id:i.act};const st=bkStatus(i);
+  return `<div class="panel" style="gap:12px"><div class="arow" style="border:0;padding:0"><span class="art">${artHTML({...a,key:i.host+"::"+i.act},"t"+i.id)}</span><div style="min-width:0"><b>${esc(i.title)}</b><span class="where">${esc(fmtDate(i.d,{weekday:"long",day:"numeric",month:"long"}))} · ${esc(i.h)} · ${i.guests===1?t("guest_1"):t("guests_n",{n:i.guests})} · ${kr(i.total)} DKK</span><span class="where">${esc(h.name||"")} · ${esc(i.place||"")}, ${esc(i.isl||"")}</span></div><div class="acts">${stPill(st)}</div></div>
+  ${payBox(i)}${h.phone||h.email?`<div style="display:grid;gap:6px"><b style="font-size:.8rem">${t("contact")}</b>${contactBlock(h)}</div>`:""}
+  ${st!=="declined"&&i.d>=TODAY?`<button class="btn danger small${tripArmed===i.id?" armed":""}" data-cancelbk="${esc(i.id)}" style="justify-self:start">${tripArmed===i.id?t("confirm_cancel"):t("cancel_bk")}</button>`:""}</div>`}).join("")}</div>`}
+const fmtDateEn=iso=>new Intl.DateTimeFormat("en-GB",{weekday:"long",day:"numeric",month:"long"}).format(new Date(iso+"T12:00:00"));
+function redrawCal(){const a=allActs().find(x=>x.key===cal.key);const el=$("#cal");if(a&&el)el.outerHTML=calHTML(a);redrawBookbar()}
+function openAct(key,keepCal){const a=allActs().find(x=>x.key===key);if(!a)return;const C=CATS[a.cat]||CATS.hike;const h=a.host;
+ if(!keepCal||cal.key!==key){cal.done=null;cal.err="";const nf=nextFree(a);const base=ui.date&&(a.slots||[]).some(s=>s.d===ui.date&&left(a,s)>0)?ui.date:nf?nf.d:TODAY;cal.key=key;cal.y=+base.slice(0,4);cal.m=+base.slice(5,7)-1;cal.sel=ui.date&&base===ui.date?ui.date:null;cal.time=null}
+ const ph=(a.photos||[]).filter(okId);
+ $("#sheet").innerHTML=`<button class="close" type="button" aria-label="✕">✕</button><div class="art${ph.length?" photo":""}">${ph.length?`${scene(a,"s"+a.key)}<div class="gal">${ph.map(p=>`<img src="/_blob/${p}" alt="${esc(a.t)}" onerror="this.remove()">`).join("")}</div>`:scene(a,"s"+a.key)}<span class="badge" style="color:${C.c}">${svgIcon(a.cat)}${catN(a.cat)}</span></div>
+ <div class="in"><span class="where">${esc(a.place)}, ${esc(a.isl)}${h.example?` · <span class="pill ex">${t("example_listing")}</span>`:""}</span><h2>${esc(a.t)}</h2><p style="margin:0">${esc(a.d)}</p>
+ <div class="facts">${a.dur?`<div><b>${t("duration")}</b><span>${esc(a.dur)}</span></div>`:""}${a.km?`<div><b>${t("distance")}</b><span>${esc(a.km)}</span></div>`:""}${a.lvl?`<div><b>${t("level")}</b><span>${esc(lvN(a.lvl))}</span></div>`:""}${a.max?`<div><b>${t("group")}</b><span>${t("upto",{n:esc(a.max)})}</span></div>`:""}<div><b>${t("per_person")}</b><span>${kr(a.price)} DKK</span></div><div><b>${t("when_runs")}</b><span>${esc(seasonText(a.mo))}</span></div></div>
+ ${calHTML(a)}
+ ${(a.inc||[]).length?`<div style="display:grid;gap:6px"><b style="font-size:.8rem">${t("included")}</b><ul>${a.inc.map(s=>`<li>${esc(s)}</li>`).join("")}</ul></div>`:""}
+ <div class="hostbox"><div class="host-top">${avatar(h,true)}<div><span class="eyebrow">${t("your_host")}</span><h3 style="font-size:1.15rem">${esc(h.name)}</h3><div class="role" style="color:${roleC(h.role)}">${esc(roleN(h.role))}</div></div></div>${contactBlock(h)}<button class="btn ghost small" data-host="${esc(a.hostId)}" style="justify-self:start">${t("view_host")}</button></div>
+ <p class="note" style="margin:0">${t("weather_note")} ${LANG!=="en"?t("lang_note"):""}</p></div>${bookbarHTML(a)}`;
+ if(!keepCal)showSheet()}
+function payMethods(h){const m=[];if(safeUrl(h.payLink))m.push("💳 "+t("pm_card"));if(h.mobilePay)m.push("📱 MobilePay");if(!m.length)m.push(h.example?"💳 "+t("pm_test"):"🤝 "+t("pm_arrival"));return m}
+function bookbarHTML(a){const mx=Math.max(1,Math.min(+a.max||20,20));cal.guests=Math.min(Math.max(1,cal.guests),mx);const g=cal.guests;const tot=g*(+a.price||0);
+ const slot=cal.sel&&cal.time?(a.slots||[]).find(s=>s.d===cal.sel&&s.h===cal.time):null;
+ return `<div class="bookbar" id="bookbar"><div class="bb-row"><div class="stepper" role="group" aria-label="${t("bb_persons")}"><button type="button" data-gstep="-1" ${g<=1?"disabled":""} aria-label="−">−</button><span><b>${g}</b><small>${t("bb_persons")}</small></span><button type="button" data-gstep="1" ${g>=mx?"disabled":""} aria-label="+">+</button></div>
+ <div class="bb-total"><small>${kr(a.price)} DKK × ${g}</small><b>${kr(tot)} DKK</b></div>
+ <button type="button" class="btn turf" data-bbgo>${slot&&!cal.done?t("bb_cta_ready"):t("bb_cta")}</button></div>
+ <div class="bb-pay"><span>${t("bb_pay")}:</span>${payMethods(a.host).map(m=>`<span class="pm">${esc(m)}</span>`).join("")}${slot&&!cal.done?`<span class="pm sel">${esc(fmtDate(slot.d))} · ${esc(slot.h)}</span>`:""}</div></div>`}
+function redrawBookbar(){const a=allActs().find(x=>x.key===cal.key);const el=$("#bookbar");if(a&&el)el.outerHTML=bookbarHTML(a)}
+function openHost(id){const h=hosts.get(id);if(!h)return;const acts=allActs().filter(a=>a.hostId===id);
+ $("#sheet").innerHTML=`<button class="close" type="button" aria-label="✕">✕</button><div class="in" style="padding-top:28px">
+ <div class="host-top">${avatar(h,true)}<div><h2>${esc(h.name)}</h2><div class="role" style="color:${roleC(h.role)}">${esc(roleN(h.role))}</div><div class="where">${esc(h.village?h.village+", ":"")}${esc(h.island||"")}${h.example?` · <span class="pill ex">${t("example_host")}</span>`:""}</div></div></div>
+ ${h.bio?`<p style="margin:0">${esc(h.bio)}</p>`:""}<div class="pills">${h.languages?`<span class="pill">${t("speaks",{x:esc(h.languages)})}</span>`:""}${h.since?`<span class="pill">${t("since",{x:esc(h.since)})}</span>`:""}</div>
+ <div style="display:grid;gap:8px"><b style="font-size:.85rem">${t("contact")}</b>${contactBlock(h)}</div>
+ <div style="display:grid;gap:8px"><b style="font-size:.85rem">${t("activities")} (${acts.length})</b><div class="mini">${acts.map(a=>`<button data-open="${esc(a.key)}"><span class="art">${artHTML(a,"m"+a.key)}</span><span><b style="font-family:var(--display)">${esc(a.t)}</b>${nextLabel(a)}</span><span class="price" style="font-size:.95rem">${kr(a.price)}</span></button>`).join("")||`<p class="note">${t("no_acts")}</p>`}</div></div></div>`;
+ showSheet()}
+function showSheet(){$("#scrim").hidden=false;$("#sheet").scrollTop=0;$("#sheet .close").focus()}
+
+/* ================= dashboard ================= */
+function setMsg(k,type){dash.msg=k;dash.msgType=type;renderDash()}
+function renderDash(){
+ const el=$("#dash");const mine=uid?hosts.get(uid):null;
+ const msg=dash.msg?`<span class="msg ${dash.msgType}" role="status">${t(dash.msg)}</span>`:"";
+ $("#dash-title").textContent=mine?t("d_hi",{x:mine.name}):t("d_new");
+ $("#dash-sub").textContent=mine?t("d_sub"):t("d_sub_new");
+ if(dbState==="loading"){el.innerHTML=`<div class="panel"><b>${t("d_connect")}</b></div>`;return}
+ if(dbState==="off"||!uid){el.innerHTML=`<div class="panel" style="max-width:620px"><h2>${t("d_sign_h")}</h2><p class="muted" style="margin:0">${t("d_sign_p")}</p></div>`;return}
+ if(canWrite===false&&!mine){el.innerHTML=`<div class="panel" style="max-width:620px"><h2>${t("d_noperm_h")}</h2><p class="muted" style="margin:0">${t("d_noperm_p")}</p></div>`;return}
+ if(!mine||dash.mode==="profile"){el.innerHTML=`<div class="dash"><div class="panel"><h2>${t("d_how")}</h2><ol class="steps">${[1,2,3,4].map(i=>`<li>${t("d_s"+i)}</li>`).join("")}</ol></div><div class="panel">${profileForm(mine)}<div class="formbar">${msg}</div></div></div>`;return}
+ if(dash.mode==="activity"){const a=dash.editId?(mine.activities||[]).find(x=>x.id===dash.editId):null;if(!dash.draftSlots)dash.draftSlots=upcoming(a||{}).map(s=>({...s}));if(!dash.draftPhotos)dash.draftPhotos=[...((a&&a.photos)||[])].filter(okId);el.innerHTML=`<div class="dash">${profilePanel(mine)}<div class="panel">${actForm(a,mine)}<div class="formbar">${msg}</div></div></div>`;return}
+ const acts=(mine.activities||[]).map(a=>({...a,hostId:uid,key:uid+"::"+a.id}));
+ el.innerHTML=`<div class="dash">${profilePanel(mine)}<div class="panel"><div class="sec-head" style="margin:0"><h2>${t("d_myacts")}</h2><button class="btn moss" data-dash="add">${t("d_add")}</button></div>${msg?`<div>${msg}</div>`:""}
+ <div class="alist">${acts.map(a=>`<div class="arow"><span class="art">${artHTML(a,"d"+a.key)}</span><div style="min-width:0"><b>${esc(a.t)}</b><span class="where">${esc(catN(a.cat))} · ${esc(a.isl)} · ${kr(a.price)} DKK</span>${nextLabel(a)} <span class="where">${t("open_dates",{n:upcoming(a).filter(s=>s.n>0).length})}</span></div><div class="acts"><button class="btn ghost small" data-edit="${esc(a.id)}">${t("edit")}</button><button class="btn danger small${dash.armed===a.id?" armed":""}" data-del="${esc(a.id)}">${dash.armed===a.id?t("confirm_del"):t("del")}</button></div></div>`).join("")||`<div class="empty"><b>${t("d_noacts_h")}</b><span>${t("d_noacts_p")}</span><button class="btn moss" data-dash="add">${t("d_add")}</button></div>`}</div></div>${bookingsPanel(mine)}</div>`;
+}
+function bookingsPanel(mine){const st=mine.bookingStatus||{};const inc=allBk().filter(i=>i.host===uid).sort((x,y)=>(x.d+x.h).localeCompare(y.d+y.h));
+ return `<div class="panel" style="grid-column:1/-1"><h2>${t("d_bookings")} <small class="n">${inc.filter(i=>i.d>=TODAY).length}</small></h2>${inc.length?`<div class="alist">${inc.map(i=>{const s=st[i.id]||"pending";return `<div class="arow" style="grid-template-columns:1fr auto"><div style="min-width:0"><b>${esc(i.title)}</b><span class="where">${esc(fmtDate(i.d))} · ${esc(i.h)} · ${i.guests===1?t("guest_1"):t("guests_n",{n:esc(i.guests)})} · ${kr(i.total)} DKK</span><span style="font-size:.9rem">${esc(i.name)} · <span style="user-select:all">${esc(i.contact)}</span></span>${i.note?`<span class="note">“${esc(i.note)}”</span>`:""}${i.paidClaim&&s!=="paid"?`<span class="pill ex">${t("guest_paid")}</span>`:""}</div>
+ <div class="acts">${stPill(s)}${s==="pending"?`<button class="btn moss small" data-bkst="${esc(i.id)}|confirmed">${t("confirm")}</button><button class="btn danger small" data-bkst="${esc(i.id)}|declined">${t("decline")}</button>`:""}${s==="confirmed"?`<button class="btn ghost small" data-bkst="${esc(i.id)}|paid">${t("mark_paid")}</button>`:""}</div></div>`}).join("")}</div>`:`<p class="note" style="margin:0">${t("d_nobk")}</p>`}</div>`}
+function profilePanel(h){return `<div class="panel"><div class="host-top">${avatar(h,true)}<div><h2>${esc(h.name)}</h2><div class="role" style="color:${roleC(h.role)}">${esc(roleN(h.role))}</div></div></div>
+ <div class="kv"><div><span>${t("location")}</span><span>${esc(h.village?h.village+", ":"")}${esc(h.island||"")}</span></div><div><span>${t("languages")}</span><span>${esc(h.languages||"–")}</span></div><div><span>${t("phone")}</span><span>${esc(h.phone||"–")}</span></div><div><span>${t("email")}</span><span>${esc(h.email||"–")}</span></div><div><span>${t("listed")}</span><span>${h.published===false?t("hidden"):t("visible")}</span></div></div>
+ <div class="formbar"><button class="btn ghost small" data-dash="profile">${t("edit_profile")}</button><button class="btn ghost small" data-hostview="${esc(uid)}">${t("preview")}</button><button class="btn ghost small" data-dash="toggle">${h.published===false?t("show_l"):t("hide_l")}</button></div></div>`}
+function profileForm(h){h=h||{};const role=dash.draftRole||h.role||"guide";
+ return `<h2>${h.name?t("f_edit_profile"):t("f_profile")}</h2><form class="fm" id="pf">
+ <label class="full">${t("f_name")}<input id="h-name" required maxlength="60" value="${esc(h.name)}" placeholder="Jógvan á Bakka"></label>
+ <div class="full" style="display:grid;gap:6px"><span style="font-size:.84rem;font-weight:600">${t("f_kind")}</span><div class="rolepick" id="rolepick">${Object.keys(ROLES).map(k=>`<button type="button" data-r="${k}" aria-pressed="${role===k}"><span class="av" style="background:${ROLES[k]};width:14px;height:14px"></span>${esc(roleN(k))}</button>`).join("")}</div></div>
+ <label>${t("f_island")}<select id="h-island">${ISLANDS.map(i=>`<option ${h.island===i?"selected":""}>${esc(i)}</option>`).join("")}</select></label>
+ <label>${t("f_village")}<input id="h-village" maxlength="40" value="${esc(h.village)}" placeholder="Gjógv"></label>
+ <label class="full">${t("f_about")}<span class="hint">${t("f_about_h")}</span><textarea id="h-bio" rows="4" maxlength="600">${esc(h.bio)}</textarea></label>
+ <label>${t("f_lang")}<input id="h-lang" maxlength="60" value="${esc(h.languages)}" placeholder="Faroese, English, Danish"></label>
+ <label>${t("f_since")}<input id="h-since" maxlength="4" inputmode="numeric" value="${esc(h.since)}" placeholder="2019"></label>
+ <label>${t("phone")}<input id="h-phone" maxlength="30" value="${esc(h.phone)}" placeholder="+298 …"></label>
+ <label>${t("email")}<input id="h-email" type="email" maxlength="80" value="${esc(h.email)}" placeholder="you@example.fo"></label>
+ <label class="full">${t("f_web")}<input id="h-web" maxlength="120" value="${esc(h.web)}" placeholder="facebook.com/…"></label>
+ <div class="full" style="border-top:1px solid var(--line);padding-top:12px"><b style="font-family:var(--display)">${t("f_pay_h")}</b></div>
+ <label class="full">${t("f_paylink")}<span class="hint">${t("f_paylink_h")}</span><input id="h-paylink" maxlength="200" value="${esc(h.payLink)}" placeholder="https://buy.stripe.com/…"></label>
+ <label>${t("f_mp")}<input id="h-mp" maxlength="20" value="${esc(h.mobilePay)}" placeholder="12345"></label>
+ <div class="full formbar"><button class="btn moss" type="submit" ${dash.saving?"disabled":""}>${dash.saving?t("saving"):h.name?t("save_profile"):t("create_profile")}</button>${h.name?`<button class="btn ghost" type="button" data-dash="cancel">${t("cancel")}</button>`:""}</div></form>
+ <p class="note" style="margin:0">${t("f_contact_note")}</p>`}
+function slotBox(a){const sl=dash.draftSlots||[];const wd=wdNames();const m=dash.slotMode;
+ let calg="";
+ if(m==="cal"){const now=new Date();if(!dash.slotCal)dash.slotCal={y:now.getFullYear(),m:now.getMonth()};const {y,m:mo}=dash.slotCal;
+  const first=new Date(y,mo,1);const lead=(first.getDay()+6)%7;const dim=new Date(y,mo+1,0).getDate();const atStart=y===now.getFullYear()&&mo===now.getMonth();
+  const byDay={};sl.forEach(s=>(byDay[s.d]=byDay[s.d]||[]).push(s));
+  let cells=wd.map(w=>`<div class="wd">${esc(w)}</div>`).join("")+"<div></div>".repeat(lead);
+  for(let d=1;d<=dim;d++){const iso=`${y}-${pad(mo+1)}-${pad(d)}`;const on=!!byDay[iso];const past=iso<TODAY;
+   cells+=past?`<div class="day">${d}</div>`:`<button type="button" class="day ${on?"free sel":"pick"} ${iso===TODAY?"today":""}" data-slotday="${iso}" aria-pressed="${on}" title="${on?esc(byDay[iso].map(s=>s.h).join(", ")):""}">${d}</button>`}
+  calg=`<div class="cal" style="background:var(--surface)"><div class="cal-head"><b>${esc(new Intl.DateTimeFormat(LOC[LANG],{month:"long",year:"numeric"}).format(first))}</b><div class="cal-nav"><button type="button" data-slotcal="-1" ${atStart?"disabled":""}>‹</button><button type="button" data-slotcal="1">›</button></div></div><div class="cal-grid">${cells}</div></div>`}
+ return `<div class="slotbox" id="slotbox"><div><b style="font-family:var(--display)">${t("sl_h")}</b><p class="note" style="margin:4px 0 0">${m==="cal"?t("sl_cal_p"):t("sl_p")}</p></div>
+ <div class="seg"><button type="button" data-slotmode="cal" aria-pressed="${m==="cal"}">${t("sl_cal")}</button><button type="button" data-slotmode="weekly" aria-pressed="${m==="weekly"}">${t("sl_weekly")}</button><button type="button" data-slotmode="one" aria-pressed="${m==="one"}">${t("sl_one")}</button></div>
+ <div class="slotadd">${m==="one"?`<label>${t("sl_date")}<input type="date" id="s-date" min="${TODAY}" value="${TODAY}"></label>`:m==="weekly"?`<label>${t("sl_day")}<select id="s-wd">${wd.map((w,i)=>`<option value="${i}">${esc(w)}</option>`).join("")}</select></label><label>${t("sl_weeks")}<select id="s-weeks">${[4,8,12,16].map(n=>`<option value="${n}" ${n===8?"selected":""}>${t("sl_wk",{n})}</option>`).join("")}</select></label>`:""}
+ <label>${t("sl_time")}<input type="time" id="s-time" value="${esc(dash.slotTime||"10:00")}"></label><label>${t("sl_spots")}<input type="number" id="s-spots" min="0" max="500" value="${esc(dash.slotSpots??((a&&a.max)||8))}"></label>${m==="cal"?"":`<button type="button" class="btn moss small" data-slotadd>${t("sl_add")}</button>`}</div>
+ ${calg}
+ <span class="where">${t("sl_count",{n:sl.length})}</span>
+ <div class="slotlist">${sl.length?sl.map((s,i)=>`<div class="slotrow"><span>${esc(fmtDate(s.d))}</span><span>${esc(s.h)}</span><input type="number" min="0" max="500" value="${s.n}" data-slotn="${i}" aria-label="${t("sl_spots")}"><button type="button" data-slotdel="${i}" aria-label="${t("del")}">✕</button></div>`).join(""):`<span class="note">${t("sl_none")}</span>`}</div></div>`}
+function actForm(a,h){a=a||{};const mo=dash.draftMonths||a.mo||[4,5,6,7,8];
+ return `<h2>${a.t?t("f_edit_act"):t("f_new_act")}</h2><form class="fm" id="af">
+ <label class="full">${t("f_title")}<input id="a-title" required maxlength="70" value="${esc(a.t)}"></label>
+ <label>${t("f_cat")}<select id="a-cat">${Object.keys(CATS).map(k=>`<option value="${k}" ${(a.cat||({fisher:"boat",home:"food",rental:"rent",farmer:"culture"}[h.role]||"hike"))===k?"selected":""}>${esc(catN(k))}</option>`).join("")}</select></label>
+ <label>${t("f_island")}<select id="a-island">${ISLANDS.map(i=>`<option ${(a.isl||h.island)===i?"selected":""}>${esc(i)}</option>`).join("")}</select></label>
+ <label>${t("f_meet")}<input id="a-place" maxlength="50" value="${esc(a.place||h.village)}"></label>
+ <label>${t("duration")}<input id="a-dur" maxlength="20" value="${esc(a.dur)}" placeholder="3 hrs"></label>
+ <label>${t("f_price")}<input id="a-price" type="number" min="0" max="100000" value="${esc(a.price??"")}" placeholder="450"></label>
+ <label>${t("f_max")}<input id="a-max" type="number" min="1" max="500" value="${esc(a.max??"")}" placeholder="8"></label>
+ <label>${t("f_km")}<input id="a-km" maxlength="15" value="${esc(a.km)}" placeholder="6 km"></label>
+ <label>${t("f_level")}<select id="a-lvl">${["","Easy","Moderate","Demanding"].map(l=>`<option ${a.lvl===l?"selected":""} value="${l}">${l?lvN(l):t("f_lvl_none")}</option>`).join("")}</select></label>
+ <div class="full" style="display:grid;gap:6px"><span style="font-size:.84rem;font-weight:600">${t("f_months")}</span><div class="monthpick" id="monthpick">${[...Array(12).keys()].map(i=>`<button type="button" data-m="${i}" aria-pressed="${mo.includes(i)}">${esc(mName(i))}</button>`).join("")}</div></div>
+ <div class="full">${photoBox()}</div>
+ <div class="full">${slotBox(a)}</div>
+ <label class="full">${t("f_desc")}<textarea id="a-desc" rows="4" maxlength="700">${esc(a.d)}</textarea></label>
+ <label class="full">${t("f_inc")}<span class="hint">${t("f_inc_h")}</span><textarea id="a-inc" rows="3" maxlength="400">${esc((a.inc||[]).join("\n"))}</textarea></label>
+ <div class="full formbar"><button class="btn moss" type="submit" ${dash.saving?"disabled":""}>${dash.saving?t("saving"):a.t?t("save_changes"):t("publish_act")}</button><button class="btn ghost" type="button" data-dash="cancel">${t("cancel")}</button></div></form>`}
+function photoBox(){const ph=dash.draftPhotos||[];
+ return `<div class="slotbox" id="photobox"><div><b style="font-family:var(--display)">${t("photos")}</b><p class="note" style="margin:4px 0 0">${t("ph_h")}</p></div>
+ <div class="thumbs">${ph.map((p,i)=>`<div class="thumb"><img src="/_blob/${esc(p)}" alt="" onerror="this.style.visibility='hidden'">${i===0?`<span class="pill">${t("ph_cover")}</span>`:""}<button type="button" data-phdel="${i}" aria-label="${t("del")}">✕</button></div>`).join("")}</div>
+ ${assets?(ph.length<6?`<label class="btn ghost small" style="justify-self:start;cursor:pointer">${dash.phBusy?t("ph_up"):t("ph_add")}<input type="file" id="ph-file" accept="image/jpeg,image/png,image/webp" multiple hidden ${dash.phBusy?"disabled":""}></label>`:""):`<span class="note">${t("ph_off")}</span>`}
+ ${dash.phErr?`<span class="msg err">${t(dash.phErr)}</span>`:""}</div>`}
+function redrawPhotos(){const el=$("#photobox");if(el)el.outerHTML=photoBox()}
+async function shrink(file){try{const bm=await createImageBitmap(file);const sc=Math.min(1,1600/Math.max(bm.width,bm.height));const c=document.createElement("canvas");c.width=Math.round(bm.width*sc);c.height=Math.round(bm.height*sc);c.getContext("2d").drawImage(bm,0,0,c.width,c.height);const b=await new Promise(r=>c.toBlob(r,"image/jpeg",.84));return b||file}catch(e){return file}}
+async function uploadPhotos(files){if(!assets)return;dash.phBusy=true;dash.phErr="";dash.dirty=true;redrawPhotos();
+ for(const f of [...files].slice(0,6-(dash.draftPhotos||[]).length)){try{const b=await shrink(f);const r=await assets.upload(b,{type:b.type&&/^image\/(jpeg|png|webp)$/.test(b.type)?b.type:"image/jpeg"});dash.draftPhotos=[...(dash.draftPhotos||[]),r.id];redrawPhotos()}catch(e){dash.phErr="ph_err"}}
+ dash.phBusy=false;redrawPhotos()}
+function redrawSlots(){const a=(hosts.get(uid)?.activities||[]).find(x=>x.id===dash.editId);$("#slotbox").outerHTML=slotBox(a)}
+function addSlots(){const time=$("#s-time").value||"10:00";const n=Math.max(0,Math.min(500,+$("#s-spots").value||0));const out=[];
+ if(dash.slotMode==="one"){const d=$("#s-date").value;if(d&&d>=TODAY)out.push(d)}
+ else{const wd=+$("#s-wd").value;const weeks=+$("#s-weeks").value;const d=new Date();d.setHours(12);for(let i=0;i<weeks*7;i++){const x=new Date(d);x.setDate(d.getDate()+i);if((x.getDay()+6)%7===wd)out.push(isoOf(x))}}
+ const sl=dash.draftSlots;out.forEach(d=>{if(!sl.some(s=>s.d===d&&s.h===time))sl.push({d,h:time,n})});
+ sl.sort((x,y)=>(x.d+x.h).localeCompare(y.d+y.h));dash.draftSlots=sl.slice(0,150);dash.dirty=true;redrawSlots()}
+
+async function writeMine(doc,okKey){
+ if(dash.saving)return false;dash.saving=true;renderDash();
+ try{await db.doc("hosts/"+uid).set(doc);dash.saving=false;dash.dirty=false;dash.mode="view";dash.editId=null;dash.draftMonths=null;dash.draftRole=null;dash.draftSlots=null;dash.draftPhotos=null;setMsg(okKey,"ok");return true}
+ catch(e){dash.saving=false;const c=e&&e.code;setMsg(c==="invalid_argument"?"m_perm":c==="quota_exceeded"?"m_quota":"m_fail","err");return false}}
+function collectProfile(){const v=id=>$(id).value.trim();const role=dash.draftRole||(hosts.get(uid)||{}).role||"guide";
+ return {name:v("#h-name"),role,island:$("#h-island").value,village:v("#h-village"),bio:v("#h-bio"),languages:v("#h-lang"),since:v("#h-since"),phone:v("#h-phone"),email:v("#h-email"),web:v("#h-web"),payLink:v("#h-paylink"),mobilePay:v("#h-mp")}}
+
+/* ================= routing ================= */
+function route(){const h=location.hash.replace("#","");ui.view=["explore","hosts","trips","dashboard"].includes(h)?h:"explore";
+ ["explore","hosts","trips","dashboard"].forEach(v=>$("#v-"+v).hidden=v!==ui.view);
+ document.querySelectorAll(".tabs a").forEach(a=>a.setAttribute("aria-current",a.dataset.v===ui.view?"page":"false"));
+ $("#scrim").hidden=true;renderAll();window.scrollTo(0,0);if(ui.view==="explore")drawSky()}
+function renderAll(){if(ui.view==="explore")renderExplore();if(ui.view==="hosts")renderHosts();if(ui.view==="trips")renderTrips();if(ui.view==="dashboard"&&!(dash.dirty&&document.querySelector("#pf,#af")))renderDash();
+ if(!$("#scrim").hidden&&cal.key&&$("#cal")&&(!cal.time||cal.done))redrawCal()}
+
+/* ================= events ================= */
+function setup(){
+ applyStatic();
+ $("#lang").onchange=e=>{LANG=e.target.value;try{localStorage.setItem("efo-lang",LANG)}catch(_){}applyStatic();dash.dirty=false;renderAll();
+  if(!$("#scrim").hidden&&cal.key&&$("#cal"))openAct(cal.key,true)};
+ $("#tiles").addEventListener("click",e=>{const b=e.target.closest(".tile");if(!b)return;ui.cat=ui.cat===b.dataset.c?"all":b.dataset.c;document.querySelectorAll(".tile").forEach(c=>c.setAttribute("aria-pressed",c.dataset.c===ui.cat));renderExplore();$("#browse").scrollIntoView({behavior:"smooth"})});
+ $("#island").onchange=e=>{ui.isl=e.target.value;renderExplore()};
+ $("#month").onchange=e=>{ui.mo=e.target.value;renderExplore()};
+ $("#date").onchange=e=>{ui.date=e.target.value;renderExplore()};
+ $("#sort").onchange=e=>{ui.sort=e.target.value;renderExplore()};
+ $("#saved").onclick=e=>{ui.saved=!ui.saved;e.currentTarget.setAttribute("aria-pressed",ui.saved);renderExplore()};
+ $("#q").oninput=e=>{ui.q=e.target.value.toLowerCase();renderExplore()};
+ $("#q").onkeydown=e=>{if(e.key==="Enter")$("#browse").scrollIntoView({behavior:"smooth"})};
+ $("#home").onclick=()=>{location.hash="explore"};
+ $("#islands").addEventListener("click",e=>{const b=e.target.closest(".isl");if(!b)return;ui.isl=b.dataset.i2;$("#island").value=b.dataset.i2;renderExplore();$("#browse").scrollIntoView({behavior:"smooth"})});
+ $("#rolebar").addEventListener("click",e=>{const b=e.target.closest("[data-role]");if(!b)return;ui.role=b.dataset.role;renderHosts()});
+ document.addEventListener("change",e=>{if(e.target.id==="guests"){cal.guests=+e.target.value;redrawCal()}if(e.target.id==="ph-file"&&e.target.files.length)uploadPhotos(e.target.files)});
+ document.addEventListener("input",e=>{const id=e.target.id;if(id==="s-time")dash.slotTime=e.target.value;if(id==="s-spots")dash.slotSpots=e.target.value;if(id==="bk-name")cal.name=e.target.value;if(id==="bk-contact")cal.contact=e.target.value;if(id==="bk-note")cal.note=e.target.value;if(e.target.closest("#pf,#af"))dash.dirty=true;const sn=e.target.dataset&&e.target.dataset.slotn;if(sn!=null&&dash.draftSlots[sn])dash.draftSlots[sn].n=Math.max(0,Math.min(500,+e.target.value||0))});
+ document.addEventListener("click",async e=>{
+  const tg=e.target;
+  const sv=tg.closest("[data-save]");if(sv){const k=sv.dataset.save;saved.has(k)?saved.delete(k):saved.add(k);try{localStorage.setItem("upp-saved2",JSON.stringify([...saved]))}catch(_){}renderExplore();return}
+  const cn=tg.closest("[data-calnav]");if(cn){cal.m+=+cn.dataset.calnav;if(cal.m<0){cal.m=11;cal.y--}if(cal.m>11){cal.m=0;cal.y++}cal.sel=null;cal.time=null;redrawCal();return}
+  const dy=tg.closest("[data-day]");if(dy){cal.sel=dy.dataset.day;cal.time=null;redrawCal();return}
+  const tm=tg.closest("[data-time]");if(tm){cal.time=tm.dataset.time;cal.err="";redrawCal();return}
+  if(tg.closest("[data-book]")){doBook();return}
+  const gs=tg.closest("[data-gstep]");if(gs){cal.guests+= +gs.dataset.gstep;if($("#bkbox")||cal.time)redrawCal();else redrawBookbar();return}
+  if(tg.closest("[data-bbgo]")){const target=$("#bkbox")||$("#cal");if(target)target.scrollIntoView({behavior:"smooth",block:"start"});const n=$("#bk-name");if(n&&!n.value)setTimeout(()=>n.focus({preventScroll:true}),400);return}
+  const pd=tg.closest("[data-paid]");if(pd){const demo=!!pd.dataset.demo;const items=myBk().map(i=>i.id===pd.dataset.paid?{...i,paidClaim:true,demoPaid:demo}:i);try{await saveMyBk(items)}catch(_){}if($("#cal"))redrawCal();renderTrips();return}
+  const cb=tg.closest("[data-cancelbk]");if(cb){const id=cb.dataset.cancelbk;if(tripArmed!==id){tripArmed=id;renderTrips();return}tripArmed=null;try{await saveMyBk(myBk().filter(i=>i.id!==id))}catch(_){}renderTrips();return}
+  const bs=tg.closest("[data-bkst]");if(bs){const [bid,st]=bs.dataset.bkst.split("|");const mine=hosts.get(uid);await writeMine({...mine,bookingStatus:{...(mine.bookingStatus||{}),[bid]:st},updatedAt:mine.updatedAt||Date.now()},"m_act_saved");return}
+  const pdl=tg.closest("[data-phdel]");if(pdl){dash.draftPhotos.splice(+pdl.dataset.phdel,1);dash.dirty=true;redrawPhotos();return}
+  if(tg.closest("[data-copymsg]")){const b=tg.closest("[data-copymsg]");const ta=$("#reqmsg");try{await navigator.clipboard.writeText(ta.value);b.textContent=t("copied")}catch(_){ta.focus();ta.select();b.textContent=t("selected")}return}
+  const op=tg.closest("[data-open]");if(op){openAct(op.dataset.open);return}
+  const ho=tg.closest("[data-host]");if(ho){openHost(ho.dataset.host);return}
+  const hv=tg.closest("[data-hostview]");if(hv){openHost(hv.dataset.hostview);return}
+  if(tg.closest(".close")||tg.id==="scrim"){$("#scrim").hidden=true;return}
+  const cp=tg.closest("[data-copy]");if(cp){const v=cp.dataset.copy;try{await navigator.clipboard.writeText(v);cp.textContent=t("copied")}catch(_){const s=cp.previousElementSibling;const r=document.createRange();r.selectNodeContents(s);const sel=getSelection();sel.removeAllRanges();sel.addRange(r);cp.textContent=t("selected")}return}
+  const rp=tg.closest("#rolepick [data-r]");if(rp){dash.dirty=true;dash.draftRole=rp.dataset.r;document.querySelectorAll("#rolepick [data-r]").forEach(b=>b.setAttribute("aria-pressed",b===rp));return}
+  const mp=tg.closest("#monthpick [data-m]");if(mp){dash.dirty=true;mp.setAttribute("aria-pressed",mp.getAttribute("aria-pressed")!=="true");dash.draftMonths=[...document.querySelectorAll("#monthpick [data-m]")].filter(b=>b.getAttribute("aria-pressed")==="true").map(b=>+b.dataset.m);return}
+  const sc=tg.closest("[data-slotcal]");if(sc){const c=dash.slotCal;const d=new Date(c.y,c.m+ +sc.dataset.slotcal,1);dash.slotCal={y:d.getFullYear(),m:d.getMonth()};redrawSlots();return}
+  const sdy=tg.closest("[data-slotday]");if(sdy){const iso=sdy.dataset.slotday;const sl=dash.draftSlots;if(sl.some(x=>x.d===iso))dash.draftSlots=sl.filter(x=>x.d!==iso);else{const h=$("#s-time").value||"10:00";const n=Math.max(0,Math.min(500,+$("#s-spots").value||0));sl.push({d:iso,h,n});sl.sort((x,y)=>(x.d+x.h).localeCompare(y.d+y.h))}dash.dirty=true;redrawSlots();return}
+  const sm=tg.closest("[data-slotmode]");if(sm){dash.slotMode=sm.dataset.slotmode;redrawSlots();return}
+  if(tg.closest("[data-slotadd]")){addSlots();return}
+  const sd=tg.closest("[data-slotdel]");if(sd){dash.draftSlots.splice(+sd.dataset.slotdel,1);dash.dirty=true;redrawSlots();return}
+  const dd=tg.closest("[data-dash]");if(dd){const a=dd.dataset.dash;dash.msg="";dash.armed=null;dash.dirty=false;
+   if(a==="add"){dash.mode="activity";dash.editId=null;dash.draftMonths=null;dash.draftSlots=null;dash.draftPhotos=null}
+   if(a==="profile"){dash.mode="profile";dash.draftRole=null}
+   if(a==="cancel"){dash.mode="view";dash.editId=null;dash.draftMonths=null;dash.draftRole=null;dash.draftSlots=null;dash.draftPhotos=null}
+   if(a==="toggle"){const mine=hosts.get(uid);await writeMine({...mine,published:mine.published===false,updatedAt:Date.now()},mine.published===false?"m_shown":"m_hidden");return}
+   renderDash();window.scrollTo({top:$("#dash").offsetTop-90,behavior:"smooth"});return}
+  const ed=tg.closest("[data-edit]");if(ed){dash.dirty=false;dash.mode="activity";dash.editId=ed.dataset.edit;dash.draftMonths=null;dash.draftSlots=null;dash.draftPhotos=null;dash.msg="";dash.armed=null;renderDash();return}
+  const de=tg.closest("[data-del]");if(de){const id=de.dataset.del;if(dash.armed!==id){dash.armed=id;dash.msg="";renderDash();return}
+   dash.armed=null;const mine=hosts.get(uid);await writeMine({...mine,activities:(mine.activities||[]).filter(a=>a.id!==id),updatedAt:Date.now()},"m_deleted");return}
+ });
+ document.addEventListener("submit",async e=>{e.preventDefault();
+  if(e.target.id==="pf"){const p=collectProfile();if(!p.name){setMsg("m_name","err");return}const mine=hosts.get(uid)||{};
+   await writeMine({...mine,...p,activities:mine.activities||[],published:mine.published!==false,createdAt:mine.createdAt||Date.now(),updatedAt:Date.now()},mine.name?"m_saved_p":"m_created")}
+  if(e.target.id==="af"){const v=id=>$(id).value.trim();const mine=hosts.get(uid);if(!v("#a-title")){setMsg("m_title","err");return}
+   const old=(mine.activities||[]).find(x=>x.id===dash.editId)||{};const mo=dash.draftMonths||old.mo||[4,5,6,7,8];
+   const act={...old,id:dash.editId||("a"+Date.now().toString(36)),t:v("#a-title"),cat:$("#a-cat").value,isl:$("#a-island").value,place:v("#a-place"),dur:v("#a-dur"),price:Math.max(0,+$("#a-price").value||0),max:+$("#a-max").value||null,km:v("#a-km"),lvl:$("#a-lvl").value,mo:[...mo].sort((a,b)=>a-b),d:v("#a-desc"),inc:v("#a-inc").split("\n").map(s=>s.trim()).filter(Boolean).slice(0,12),slots:(dash.draftSlots||[]).filter(s=>s.d>=TODAY).slice(0,150),photos:(dash.draftPhotos||old.photos||[]).filter(okId).slice(0,6)};
+   const list=[...(mine.activities||[])];const i=list.findIndex(x=>x.id===act.id);i>=0?list[i]=act:list.unshift(act);
+   await writeMine({...mine,activities:list.slice(0,40),updatedAt:Date.now()},i>=0?"m_act_saved":"m_act_pub")}
+ });
+ document.addEventListener("keydown",e=>{if(e.key==="Escape")$("#scrim").hidden=true});
+ addEventListener("hashchange",route);
+ const setNav=()=>document.documentElement.style.setProperty("--navh",$("#top").offsetHeight+"px");setNav();addEventListener("resize",setNav);
+}
+
+function drawSky(){const c=$("#sky");if(!c||!c.offsetWidth)return;const g=c.getContext("2d");const dpr=Math.min(2,devicePixelRatio||1);const w=c.width=c.offsetWidth*dpr,h=c.height=c.offsetHeight*dpr;
+ const sky=g.createLinearGradient(0,0,0,h);sky.addColorStop(0,"#0e2e33");sky.addColorStop(.55,"#1f5258");sky.addColorStop(.8,"#4f7f7b");g.fillStyle=sky;g.fillRect(0,0,w,h);
+ const sun=g.createRadialGradient(w*.78,h*.62,0,w*.78,h*.62,h*.5);sun.addColorStop(0,"rgba(240,190,120,.55)");sun.addColorStop(1,"rgba(240,190,120,0)");g.fillStyle=sun;g.fillRect(0,0,w,h);
+ let s=11;const r=()=>(s=(s*9301+49297)%233280)/233280;
+ [[.62,.22,"#2c5f5c"],[.7,.2,"#1f4a49"],[.79,.18,"#163a3a"],[.88,.14,"#0f2b2c"]].forEach(([base,amp,col],li)=>{g.beginPath();g.moveTo(0,h);let x=0;g.lineTo(0,h*base);while(x<w){x+=w*(.04+r()*.07);g.lineTo(x,h*(base-amp*(.25+r()*.75)))}g.lineTo(w,h);g.closePath();g.fillStyle=col;g.fill();
+  const fog=g.createLinearGradient(0,h*(base-.05),0,h*(base+.08));fog.addColorStop(0,"rgba(200,225,220,0)");fog.addColorStop(.5,`rgba(200,225,220,${.12-li*.02})`);fog.addColorStop(1,"rgba(200,225,220,0)");g.fillStyle=fog;g.fillRect(0,h*(base-.05),w,h*.13)})}
+
+/* ================= boot ================= */
+setup();route();try{addEventListener("resize",drawSky)}catch(e){}
+(async()=>{
+ const use=n=>window.claude&&window.claude.use?window.claude.use(n).catch(()=>null):Promise.resolve(null);
+ [db,user,assets]=await Promise.all([use("db"),use("user"),use("assets")]);
+ if(user){try{uid=await user.id();canWrite=await user.can("data.write")}catch(e){}}
+ if(!db){dbState="off";renderAll();return}
+ db.collection("bookings").onSnapshot(snap=>{bkDocs=new Map(snap.docs.filter(d=>d.exists).map(d=>[d.id,d.data()]));renderAll()},()=>{});
+ db.collection("hosts").onSnapshot(snap=>{hosts=new Map(snap.docs.filter(d=>d.exists).map(d=>[d.id,d.data()]));dbState="ready";renderAll()},err=>{dbState=hosts.size?"ready":"off";renderAll()});
+})();
+</script>
+
+</body>
+</html>
